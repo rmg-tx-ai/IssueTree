@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>VZ Issue Tree</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #f2efe9;
+      --dot:       #cfc8be;
+      --navy:      #1c2b3a;
+      --green:     #166638;
+      --teal:      #0e4d6c;
+      --rust:      #7d3512;
+      --ink:       #1c2b3a;
+      --mid:       #5a6e80;
+      --faint:     #9aacba;
+      --white:     #ffffff;
+      --surface:   #faf9f6;
+      --border:    #e2ddd6;
+      --shadow-sm: 0 1px 4px rgba(28,43,58,.07);
+      --shadow-md: 0 4px 16px rgba(28,43,58,.10);
+      --shadow-lg: 0 8px 32px rgba(28,43,58,.14);
+      --r:         9px;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg);
+      background-image: radial-gradient(circle, var(--dot) 1px, transparent 1px);
+      background-size: 24px 24px;
+      overflow: hidden;
+      width: 100vw; height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Toolbar ── */
+    #toolbar {
+      position: fixed; top: 16px; left: 50%;
+      transform: translateX(-50%);
+      z-index: 500;
+      background: rgba(250,249,246,.94);
+      backdrop-filter: blur(14px) saturate(1.4);
+      -webkit-backdrop-filter: blur(14px) saturate(1.4);
+      border-radius: 14px;
+      padding: 8px 12px;
+      display: flex; align-items: center; gap: 6px;
+      white-space: nowrap;
+      box-shadow: var(--shadow-md), 0 0 0 1px var(--border);
+    }
+    #tb-title {
+      font-family: 'Libre Baskerville', serif;
+      font-size: 13px; color: var(--navy);
+      margin-right: 4px; letter-spacing: -.1px;
+    }
+    .tsep { width: 1px; height: 18px; background: var(--border); margin: 0 2px; }
+
+    .tbtn {
+      background: transparent; border: none;
+      color: var(--mid); border-radius: 7px;
+      padding: 5px 9px; font-size: 11.5px; font-weight: 600;
+      font-family: inherit; cursor: pointer;
+      transition: background .12s, color .12s;
+    }
+    .tbtn:hover { background: var(--border); color: var(--ink); }
+    .tbtn.on { background: var(--navy); color: #fff; }
+    .tbtn.on:hover { background: #2d3f50; }
+    .tbtn.danger { color: #b03020; }
+    .tbtn.danger:hover { background: #fdecea; }
+
+    /* Search */
+    .srch {
+      position: relative; display: flex; align-items: center;
+    }
+    .srch-icon {
+      position: absolute; left: 8px;
+      color: var(--faint); font-size: 12px; pointer-events: none;
+    }
+    #search-input {
+      padding: 5px 26px 5px 26px;
+      border: 1.5px solid var(--border);
+      border-radius: 7px; font-size: 11.5px;
+      font-family: inherit; color: var(--ink);
+      background: var(--surface); outline: none;
+      width: 148px;
+      transition: border-color .15s, width .2s, background .15s;
+    }
+    #search-input:focus { border-color: var(--teal); width: 186px; background: #fff; }
+    #search-input::placeholder { color: var(--faint); }
+    #srch-clear {
+      position: absolute; right: 7px; font-size: 10px;
+      color: var(--faint); cursor: pointer; display: none;
+    }
+    #srch-clear:hover { color: var(--mid); }
+    #save-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--faint); margin-left: 2px;
+      transition: background .3s;
+    }
+
+    /* ── Hint ── */
+    #hint {
+      position: fixed; bottom: 16px; left: 50%;
+      transform: translateX(-50%);
+      background: rgba(250,249,246,.88);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      border-radius: 20px; padding: 5px 16px;
+      font-size: 10.5px; color: var(--faint);
+      box-shadow: var(--shadow-sm), 0 0 0 1px var(--border);
+      z-index: 200; pointer-events: none; white-space: nowrap;
+    }
+    #hint strong { color: var(--mid); font-weight: 600; }
+
+    /* Legend */
+    #legend {
+      position: fixed; bottom: 16px; right: 16px;
+      display: flex; gap: 10px; align-items: center;
+      background: rgba(250,249,246,.88);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      border-radius: 20px; padding: 5px 12px;
+      box-shadow: var(--shadow-sm), 0 0 0 1px var(--border);
+      z-index: 200;
+    }
+    .leg { display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; color: var(--mid); }
+    .leg-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+    /* ── Canvas ── */
+    #viewport { width: 100vw; height: 100vh; overflow: hidden; position: relative; }
+    #canvas { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform; }
+    #svg-layer { position: absolute; top: 0; left: 0; pointer-events: none; overflow: visible; }
+
+    /* ── Nodes ── */
+    .node {
+      position: absolute; border-radius: var(--r);
+      cursor: pointer; user-select: none;
+      transition: box-shadow .14s, transform .12s, opacity .18s;
+    }
+    .node:hover:not(.leaf) { transform: translateY(-1px); }
+    .node.leaf { cursor: text; }
+    .node.leaf:hover { transform: translateY(-1px); }
+    .node.dimmed { opacity: 0.12; pointer-events: none; }
+    .node.highlighted {
+      box-shadow: 0 0 0 2.5px #e8a020, 0 4px 18px rgba(232,160,32,.2) !important;
+      z-index: 2;
+    }
+
+    .node-body {
+      display: flex; align-items: center;
+      height: 100%; padding: 0 10px 0 13px; gap: 7px;
+    }
+    .node-lbl { flex: 1; font-weight: 600; line-height: 1.3; }
+    .node-count {
+      font-size: 9px; font-weight: 700; letter-spacing: .3px;
+      background: rgba(0,0,0,.1); border-radius: 8px;
+      padding: 1px 6px; flex-shrink: 0;
+    }
+    .node-chevron {
+      flex-shrink: 0; font-size: 7px; opacity: .45;
+      transition: transform .2s; margin-left: 1px;
+    }
+    .node-chevron.open { transform: rotate(90deg); }
+
+    /* ── Context menu ── */
+    #ctx-menu {
+      position: fixed; z-index: 600;
+      background: var(--white);
+      border-radius: 11px; padding: 5px;
+      min-width: 170px;
+      box-shadow: var(--shadow-lg), 0 0 0 1px var(--border);
+      display: none;
+      animation: menuIn .12s ease;
+    }
+    @keyframes menuIn {
+      from { opacity:0; transform: scale(.95) translateY(-4px); }
+      to   { opacity:1; transform: scale(1) translateY(0); }
+    }
+    .ctx-item {
+      display: flex; align-items: center; gap: 9px;
+      padding: 8px 12px; border-radius: 7px;
+      font-size: 12px; font-weight: 500; color: var(--ink);
+      cursor: pointer;
+      transition: background .1s;
+    }
+    .ctx-item:hover { background: var(--bg); }
+    .ctx-item .ctx-icon { font-size: 13px; width: 16px; text-align: center; opacity: .7; }
+    .ctx-item.danger { color: #b03020; }
+    .ctx-item.danger:hover { background: #fdecea; }
+    .ctx-item.disabled { opacity: .35; pointer-events: none; }
+    .ctx-sep { height: 1px; background: var(--border); margin: 4px 5px; }
+
+    /* ── Add / Rename modal ── */
+    #modal-overlay {
+      position: fixed; inset: 0; z-index: 700;
+      background: rgba(28,43,58,.18);
+      backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+      display: none; align-items: center; justify-content: center;
+      animation: fadeIn .15s ease;
+    }
+    @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+    #modal {
+      background: var(--white); border-radius: 14px;
+      padding: 20px 22px; min-width: 320px;
+      box-shadow: var(--shadow-lg), 0 0 0 1px var(--border);
+      animation: modalIn .18s cubic-bezier(.34,1.4,.64,1);
+    }
+    @keyframes modalIn {
+      from { opacity:0; transform: scale(.94) translateY(8px); }
+      to   { opacity:1; transform: scale(1) translateY(0); }
+    }
+    #modal-title {
+      font-size: 13px; font-weight: 700; color: var(--navy);
+      margin-bottom: 4px;
+    }
+    #modal-sub {
+      font-size: 11px; color: var(--faint); margin-bottom: 14px;
+    }
+    #modal-input {
+      width: 100%; padding: 9px 12px;
+      border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: 13px; font-family: inherit; color: var(--ink);
+      outline: none; background: var(--surface);
+      transition: border-color .15s;
+    }
+    #modal-input:focus { border-color: var(--teal); background: #fff; }
+    .modal-btns {
+      display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px;
+    }
+    .mbtn {
+      padding: 7px 16px; border-radius: 7px; border: none;
+      font-size: 12px; font-weight: 600; font-family: inherit;
+      cursor: pointer; transition: background .12s;
+    }
+    .mbtn.cancel { background: var(--bg); color: var(--mid); }
+    .mbtn.cancel:hover { background: var(--border); }
+    .mbtn.ok { background: var(--navy); color: #fff; }
+    .mbtn.ok:hover { background: #2d3f50; }
+
+    /* Inline rename input (positioned over node) */
+    .rename-input {
+      position: fixed; z-index: 650;
+      border: 2px solid var(--teal);
+      border-radius: var(--r);
+      background: #fff;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 600; color: var(--ink);
+      outline: none; padding: 0 13px;
+      box-shadow: 0 0 0 4px rgba(14,77,108,.12);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Toolbar ── -->
+<div id="toolbar">
+  <span id="tb-title">VZ Issue Tree</span>
+  <div class="tsep"></div>
+  <div class="srch">
+    <span class="srch-icon">⌕</span>
+    <input id="search-input" type="text" placeholder="Search…" autocomplete="off" oninput="onSearch(this.value)"/>
+    <span id="srch-clear" onclick="clearSearch()">✕</span>
+  </div>
+  <div class="tsep"></div>
+  <button class="tbtn" id="btn-l1" onclick="setDepth(1)">L1</button>
+  <button class="tbtn" id="btn-l2" onclick="setDepth(2)">L2</button>
+  <button class="tbtn" id="btn-all" onclick="setDepth(99)">All</button>
+  <div class="tsep"></div>
+  <button class="tbtn" onclick="fitView()">Fit ⊡</button>
+  <div class="tsep"></div>
+  <button class="tbtn" onclick="exportJSON()" title="Download tree as JSON">↓ Export</button>
+  <button class="tbtn" onclick="document.getElementById('import-file').click()" title="Load a saved JSON tree">↑ Import</button>
+  <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(this)"/>
+  <div class="tsep"></div>
+  <button class="tbtn danger" onclick="hardReset()">Reset</button>
+  <div id="save-dot" title="Auto-saved"></div>
+</div>
+
+<!-- ── Hint ── -->
+<div id="hint">Scroll to pan &nbsp;·&nbsp; Pinch to zoom &nbsp;·&nbsp; Click to expand &nbsp;·&nbsp; <strong>Right-click</strong> any node to add, rename, or delete &nbsp;·&nbsp; <strong>Double-click</strong> to rename</div>
+
+<!-- ── Legend ── -->
+<div id="legend">
+  <div class="leg"><div class="leg-dot" style="background:var(--green)"></div>Pricing</div>
+  <div class="leg"><div class="leg-dot" style="background:var(--teal)"></div>Volume</div>
+  <div class="leg"><div class="leg-dot" style="background:var(--rust)"></div>Cost</div>
+</div>
+
+<!-- ── Canvas ── -->
+<div id="viewport">
+  <div id="canvas">
+    <svg id="svg-layer"></svg>
+  </div>
+</div>
+
+<!-- ── Context menu ── -->
+<div id="ctx-menu">
+  <div class="ctx-item" id="ctx-add"    onclick="ctxDoAdd()">   <span class="ctx-icon">＋</span> Add child node</div>
+  <div class="ctx-item" id="ctx-rename" onclick="ctxDoRename()"><span class="ctx-icon">✎</span> Rename</div>
+  <div class="ctx-item" id="ctx-color"  onclick="ctxDoColor()" style="display:none"><span class="ctx-icon">◉</span> Change color</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item danger" id="ctx-delete" onclick="ctxDoDelete()"><span class="ctx-icon">✕</span> Delete node</div>
+</div>
+
+<!-- ── Add / Rename modal ── -->
+<div id="modal-overlay" onclick="closeModal(event)">
+  <div id="modal">
+    <div id="modal-title">Add child node</div>
+    <div id="modal-sub">Under: <span id="modal-parent-label"></span></div>
+    <input id="modal-input" type="text" placeholder="Node label…" />
+    <div class="modal-btns">
+      <button class="mbtn cancel" onclick="closeModal()">Cancel</button>
+      <button class="mbtn ok" id="modal-ok" onclick="confirmModal()">Add</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════
+// DATA
+// ════════════════════════════════════════════════
+const DEFAULT = {
+  id:'root', label:'VZ — Performance Levers', open:true, color:'#1c2b3a',
+  children:[
+    { id:'pricing', label:'Pricing Levers', open:false, color:'#166638',
+      children:[
+        { id:'pr-level', label:'Price Level', open:false, children:[
+          {id:'pl1',label:'Base plan price points'},
+          {id:'pl2',label:'Premium network tier pricing (5G UW surcharge)'},
+          {id:'pl3',label:'Prepaid vs. postpaid price gap'},
+          {id:'pl4',label:'Legacy plan repricing / forced migration'},
+          {id:'pl5',label:'International rates — roaming & day passes'},
+          {id:'pl6',label:'Overage rates vs. throttle vs. hard cap design'},
+        ]},
+        { id:'pr-arch', label:'Price Architecture', open:false, children:[
+          {id:'pa1',label:'Number of tiers & what sits in each'},
+          {id:'pa2',label:'Flat rate vs. usage-based design'},
+          {id:'pa3',label:'Unlimited plan throttle threshold design'},
+          {id:'pa4',label:'Bundle architecture (what gets packaged together)'},
+          {id:'pa5',label:'Multi-line threshold & discount steps'},
+        ]},
+        { id:'pr-addon', label:'Add-on & Ancillary Pricing', open:false, children:[
+          {id:'pad1',label:'Device protection / insurance pricing'},
+          {id:'pad2',label:'Cloud storage tier pricing'},
+          {id:'pad3',label:'Streaming bundle add-ons (Disney+, Apple, etc.)'},
+          {id:'pad4',label:'Hotspot / tethering data add-on tiers'},
+          {id:'pad5',label:'Cybersecurity & parental controls'},
+          {id:'pad6',label:'International calling passes'},
+        ]},
+        { id:'pr-device', label:'Device & Financing Pricing', open:false, children:[
+          {id:'pd1',label:'Handset subsidy depth per gross add'},
+          {id:'pd2',label:'Trade-in valuation levels'},
+          {id:'pd3',label:'Installment plan terms (24 vs. 36 months)'},
+          {id:'pd4',label:'Upgrade eligibility timing'},
+          {id:'pd5',label:'BYOD discount level'},
+        ]},
+        { id:'pr-disc', label:'Discount & Promotion Architecture', open:false, children:[
+          {id:'pdc1',label:'Autopay / paperless discount depth'},
+          {id:'pdc2',label:'Loyalty / tenure-based discount structure'},
+          {id:'pdc3',label:'Port-in credit depth & targeting'},
+          {id:'pdc4',label:'Win-back offer structure for churned customers'},
+          {id:'pdc5',label:'Promotional pricing duration & conditions'},
+          {id:'pdc6',label:'BOGO & device deal structure'},
+        ]},
+        { id:'pr-seg', label:'Segment-Based Pricing', open:false, children:[
+          {id:'ps1',label:'Military / first responder plans'},
+          {id:'ps2',label:'Senior / 55+ plan pricing'},
+          {id:'ps3',label:'Student plan pricing'},
+          {id:'ps4',label:'SMB vs. consumer architecture'},
+          {id:'ps5',label:'Enterprise volume discounts & SLA pricing'},
+          {id:'ps6',label:'IoT / connected device unit pricing'},
+          {id:'ps7',label:'Affinity / co-brand partnership pricing'},
+        ]},
+        { id:'pr-chan', label:'Channel-Based Pricing', open:false, children:[
+          {id:'pc1',label:'Online vs. in-store price differential'},
+          {id:'pc2',label:'Third-party retailer commission structure'},
+          {id:'pc3',label:'Wholesale / MVNO capacity pricing'},
+          {id:'pc4',label:'Direct vs. indirect channel price parity rules'},
+        ]},
+        { id:'pr-contract', label:'Contract & Commitment Structure', open:false, children:[
+          {id:'pct1',label:'Month-to-month vs. annual plan differential'},
+          {id:'pct2',label:'Early termination fee design'},
+          {id:'pct3',label:'Device lock-in vs. unlocked pricing gap'},
+          {id:'pct4',label:'Auto-renewal terms & conditions'},
+        ]},
+      ]
+    },
+    { id:'volume', label:'Volume Levers', open:false, color:'#0e4d6c',
+      children:[
+        { id:'vol-gross', label:'Gross Adds', open:false, children:[
+          {id:'vg1',label:'Consumer postpaid — port-ins & first-time buyers'},
+          {id:'vg2',label:'Consumer prepaid — value segment acquisition'},
+          {id:'vg3',label:'Connected devices (tablets, watches, hotspots)'},
+          {id:'vg4',label:'Youth / first-phone market'},
+          {id:'vg5',label:'Senior / late adopter segment'},
+          {id:'vg6',label:'Recent immigrant & ethnic segment'},
+        ]},
+        { id:'vol-churn', label:'Churn & Retention', open:false, children:[
+          {id:'vc1',label:'Price-driven voluntary churn'},
+          {id:'vc2',label:'Network quality-driven churn'},
+          {id:'vc3',label:'Device / upgrade-driven churn'},
+          {id:'vc4',label:'Service & CX-driven churn'},
+          {id:'vc5',label:'Involuntary churn (non-payment, billing errors)'},
+          {id:'vc6',label:'Downgrade churn (line or plan reduction)'},
+        ]},
+        { id:'vol-expand', label:'Base Expansion', open:false, children:[
+          {id:'ve1',label:'Child / family member line additions'},
+          {id:'ve2',label:'Watch & tablet line additions'},
+          {id:'ve3',label:'Connected device lines (home security, car)'},
+          {id:'ve4',label:'Business account headcount-driven line growth'},
+          {id:'ve5',label:'IoT fleet expansion within enterprise contracts'},
+        ]},
+        { id:'vol-new', label:'New Segments & Categories', open:false, children:[
+          {id:'vn1',label:'Fixed Wireless Access — home broadband replacement'},
+          {id:'vn2',label:'IoT — fleet & logistics'},
+          {id:'vn3',label:'IoT — healthcare monitoring'},
+          {id:'vn4',label:'IoT — smart city & utilities'},
+          {id:'vn5',label:'MVNO & wholesale capacity sales'},
+          {id:'vn6',label:'B2B / enterprise new logo acquisition'},
+          {id:'vn7',label:'Government & public sector contracts'},
+        ]},
+        { id:'vol-chan', label:'Channel & Distribution', open:false, children:[
+          {id:'vch1',label:'Owned retail footprint — geographic gaps'},
+          {id:'vch2',label:'Online / e-commerce conversion rate'},
+          {id:'vch3',label:'National retailer shelf presence'},
+          {id:'vch4',label:'Independent dealer & agent network density'},
+          {id:'vch5',label:'Employer / corporate benefit programs'},
+          {id:'vch6',label:'Referral & word-of-mouth programs'},
+        ]},
+        { id:'vol-comp', label:'Competitive Win Rate', open:false, children:[
+          {id:'vw1',label:'Share of active market switchers'},
+          {id:'vw2',label:'Port-in vs. port-out balance by market'},
+          {id:'vw3',label:'Win-back rate of recently churned customers'},
+          {id:'vw4',label:'Competitive response speed to defection signals'},
+        ]},
+      ]
+    },
+    { id:'cost', label:'Cost Levers', open:false, color:'#7d3512',
+      children:[
+        { id:'co-net', label:'Network & Infrastructure', open:false, children:[
+          {id:'cn1',label:'Spectrum license holding costs'},
+          {id:'cn2',label:'Tower & cell site ground lease costs'},
+          {id:'cn3',label:'Backhaul — fiber lease vs. own economics'},
+          {id:'cn4',label:'RAN equipment CapEx & depreciation'},
+          {id:'cn5',label:'Network power & energy consumption'},
+          {id:'cn6',label:'Domestic & international roaming settlements'},
+          {id:'cn7',label:'Field technician costs — contractor vs. employee mix'},
+        ]},
+        { id:'co-dev', label:'Cost of Devices & Goods', open:false, children:[
+          {id:'cd1',label:'Handset unit cost — OEM negotiation'},
+          {id:'cd2',label:'Net subsidy absorbed per gross add'},
+          {id:'cd3',label:'Trade-in residual value risk'},
+          {id:'cd4',label:'Inventory, warehousing & logistics'},
+        ]},
+        { id:'co-acq', label:'Customer Acquisition Costs', open:false, children:[
+          {id:'ca1',label:'Advertising & brand — TV, digital, OOH'},
+          {id:'ca2',label:'Company-owned retail store costs'},
+          {id:'ca3',label:'Third-party retailer commissions'},
+          {id:'ca4',label:'Port-in credits & promotional costs'},
+          {id:'ca5',label:'B2B sales force & bid costs'},
+        ]},
+        { id:'co-ret', label:'Customer Retention Costs', open:false, children:[
+          {id:'cr1',label:'Retention offer & discount depth'},
+          {id:'cr2',label:'Loyalty program costs'},
+          {id:'cr3',label:'Upgrade subsidy for existing customers'},
+          {id:'cr4',label:'Win-back campaign costs'},
+        ]},
+        { id:'co-care', label:'Customer Care & Service', open:false, children:[
+          {id:'cc1',label:'Contact center labor — in-house vs. offshore'},
+          {id:'cc2',label:'Average handle time × contact volume'},
+          {id:'cc3',label:'Digital / self-serve deflection rate'},
+          {id:'cc4',label:'Billing & collections costs'},
+          {id:'cc5',label:'Bad debt write-offs'},
+          {id:'cc6',label:'Fraud management costs'},
+        ]},
+        { id:'co-tech', label:'Technology & IT', open:false, children:[
+          {id:'ct1',label:'BSS / OSS licensing & maintenance'},
+          {id:'ct2',label:'On-premise vs. cloud infrastructure costs'},
+          {id:'ct3',label:'Software & SaaS licensing'},
+          {id:'ct4',label:'Cybersecurity platform costs'},
+          {id:'ct5',label:'Tech debt — legacy system maintenance'},
+        ]},
+        { id:'co-ga', label:'G&A / Corporate Overhead', open:false, children:[
+          {id:'cg1',label:'Corporate function headcount (Finance, HR, Legal)'},
+          {id:'cg2',label:'Real estate & facilities'},
+          {id:'cg3',label:'Shared services vs. outsourced BPO'},
+        ]},
+        { id:'co-vend', label:'Vendor & Procurement', open:false, children:[
+          {id:'cv1',label:'RAN vendor contracts (Ericsson, Nokia, Samsung)'},
+          {id:'cv2',label:'Single vs. multi-vendor network strategy'},
+          {id:'cv3',label:'Managed services — NOC & field ops outsourcing'},
+          {id:'cv4',label:'Spend aggregation & procurement leverage'},
+        ]},
+        { id:'co-reg', label:'Regulatory & Compliance', open:false, children:[
+          {id:'crg1',label:'Universal Service Fund (USF) contributions'},
+          {id:'crg2',label:'FCC & state PUC compliance costs'},
+          {id:'crg3',label:'Data privacy compliance — CPNI, CCPA'},
+        ]},
+        { id:'co-fin', label:'Financing & Capital Costs', open:false, children:[
+          {id:'cf1',label:'Debt service & interest expense'},
+          {id:'cf2',label:'Spectrum auction deferred installments'},
+          {id:'cf3',label:'Device financing cost of capital'},
+          {id:'cf4',label:'Tower & real estate operating leases'},
+        ]},
+      ]
+    },
+  ]
+};
+
+// ════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════
+let tree           = loadTree();
+let pan            = {x:0,y:0};
+let zoom           = 1;
+let ctxTargetId    = null;
+let modalMode      = 'add';   // 'add' or 'rename'
+let searchActive   = false;
+let savedOpenState = null;
+
+// ════════════════════════════════════════════════
+// PERSISTENCE
+// ════════════════════════════════════════════════
+function loadTree() {
+  try {
+    const s = localStorage.getItem('vzTree_v4');
+    return s ? JSON.parse(s) : clone(DEFAULT);
+  } catch(e) { return clone(DEFAULT); }
+}
+function save() {
+  localStorage.setItem('vzTree_v4', JSON.stringify(tree));
+  const d = document.getElementById('save-dot');
+  d.style.background = '#60b87a';
+  clearTimeout(save._t);
+  save._t = setTimeout(()=>d.style.background='var(--faint)', 1200);
+}
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
+function hardReset() {
+  if (!confirm('Reset to defaults? All custom nodes and edits will be removed.')) return;
+  localStorage.removeItem('vzTree_v4');
+  tree = clone(DEFAULT); clearSearch(); render(); fitView();
+}
+function exportJSON() {
+  const slug = tree.label.replace(/\s+/g,'-').toLowerCase().replace(/[^a-z0-9-]/g,'');
+  const date = new Date().toISOString().slice(0,10);
+  const blob = new Blob([JSON.stringify(tree, null, 2)], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `issue-tree-${slug}-${date}.json`;
+  a.click(); URL.revokeObjectURL(url);
+}
+function importJSON(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      if (!parsed.id || !parsed.label) { alert('Invalid issue tree JSON.'); return; }
+      if (!confirm(`Load "${parsed.label}"? This will replace your current tree.`)) return;
+      tree = parsed; save(); clearSearch(); render(); fitView();
+    } catch(err) { alert('Could not parse JSON: ' + err.message); }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+// ════════════════════════════════════════════════
+// TREE HELPERS
+// ════════════════════════════════════════════════
+function findNode(id, n=tree) {
+  if (n.id===id) return n;
+  for (const c of (n.children||[])) { const f=findNode(id,c); if(f) return f; }
+  return null;
+}
+function findParent(id, n=tree, parent=null) {
+  if (n.id===id) return parent;
+  for (const c of (n.children||[])) { const p=findParent(id,c,n); if(p!==undefined) return p; }
+  return undefined;
+}
+
+function buildColorMap(n, inherited='#1c2b3a', map={}) {
+  map[n.id] = n.color || inherited;
+  for (const c of (n.children||[])) buildColorMap(c, n.color||inherited, map);
+  return map;
+}
+
+function toggle(id) {
+  const n = findNode(id);
+  if (!n || !n.children?.length) return;
+  n.open = !n.open;
+  save(); render();
+  if (n.open) autoPanRight(id);
+}
+
+function autoPanRight(id) {
+  setTimeout(()=>{
+    const el = document.querySelector(`.node[data-id="${id}"]`);
+    if (!el) return;
+    const nx2 = parseFloat(el.style.left)*zoom + pan.x + NW*zoom;
+    if (nx2 > window.innerWidth*0.82)
+      animateTo(pan.x-(nx2-window.innerWidth*0.72), pan.y, zoom);
+  }, 40);
+}
+
+function setDepth(d) {
+  clearSearch();
+  walkDepth(tree, d, 0);
+  ['btn-l1','btn-l2','btn-all'].forEach(id=>document.getElementById(id).classList.remove('on'));
+  if (d===1)  document.getElementById('btn-l1').classList.add('on');
+  if (d===2)  document.getElementById('btn-l2').classList.add('on');
+  if (d===99) document.getElementById('btn-all').classList.add('on');
+  save(); render(); fitView();
+}
+function walkDepth(n, max, cur) {
+  n.open = cur<max && !!(n.children?.length);
+  for (const c of (n.children||[])) walkDepth(c, max, cur+1);
+}
+
+// ════════════════════════════════════════════════
+// SEARCH
+// ════════════════════════════════════════════════
+function onSearch(val) {
+  const term = val.trim().toLowerCase();
+  document.getElementById('srch-clear').style.display = term ? 'block' : 'none';
+  if (!term) { clearSearch(); return; }
+  if (!searchActive) {
+    savedOpenState = captureOpen(tree);
+    expandAll(tree);
+    searchActive = true;
+  }
+  render(term);
+}
+function clearSearch() {
+  document.getElementById('search-input').value = '';
+  document.getElementById('srch-clear').style.display = 'none';
+  if (searchActive && savedOpenState) { restoreOpen(tree, savedOpenState); savedOpenState=null; }
+  searchActive = false;
+  ['btn-l1','btn-l2','btn-all'].forEach(id=>document.getElementById(id).classList.remove('on'));
+  render();
+}
+function captureOpen(n) {
+  const s={id:n.id,open:n.open,ch:{}};
+  for (const c of (n.children||[])) s.ch[c.id]=captureOpen(c);
+  return s;
+}
+function restoreOpen(n,s) {
+  if(s&&s.id===n.id) n.open=s.open;
+  for(const c of (n.children||[])) if(s?.ch?.[c.id]) restoreOpen(c,s.ch[c.id]);
+}
+function expandAll(n) {
+  if(n.children?.length){n.open=true;n.children.forEach(expandAll);}
+}
+
+// ════════════════════════════════════════════════
+// LAYOUT
+// ════════════════════════════════════════════════
+const NW=216, NH=44, HG=58, VG=9;
+
+function subH(n) {
+  if (!n.open||!n.children?.length) return NH+VG;
+  return Math.max(NH+VG, n.children.reduce((s,c)=>s+subH(c),0));
+}
+function layout(n, x, midY, out, depth=0) {
+  out.push({n,x,y:midY-NH/2,depth});
+  if (n.open&&n.children?.length) {
+    const tot=n.children.reduce((s,c)=>s+subH(c),0);
+    let cy=midY-tot/2;
+    for(const c of n.children){const h=subH(c);layout(c,x+NW+HG,cy+h/2,out,depth+1);cy+=h;}
+  }
+}
+
+// ════════════════════════════════════════════════
+// RENDER
+// ════════════════════════════════════════════════
+function render(searchTerm='') {
+  const colors  = buildColorMap(tree);
+  const canvas  = document.getElementById('canvas');
+  const svg     = document.getElementById('svg-layer');
+  const totalH  = subH(tree);
+  const pos     = [];
+  layout(tree, 0, totalH/2+20, pos);
+
+  const W = pos.reduce((m,p)=>Math.max(m,p.x+NW),0)+150;
+  const H = pos.reduce((m,p)=>Math.max(m,p.y+NH),0)+90;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  svg.setAttribute('width',W); svg.setAttribute('height',H);
+
+  canvas.querySelectorAll('.node').forEach(e=>e.remove());
+
+  // SVG edges
+  let paths='';
+  for(const {n,x,y} of pos){
+    if(!n.open||!n.children?.length) continue;
+    const px=x+NW, py=y+NH/2;
+    for(const child of n.children){
+      const cp=pos.find(p=>p.n===child); if(!cp) continue;
+      const cx=cp.x, cy=cp.y+NH/2;
+      const col=colors[child.id]||'#888';
+      const mx=px+HG*.48;
+      paths+=`<path d="M${px},${py} C${mx},${py} ${mx},${cy} ${cx},${cy}"
+        fill="none" stroke="${col}" stroke-width="1.5" opacity="0.22"/>`;
+    }
+  }
+  svg.innerHTML=paths;
+
+  // Match ids for search
+  const matchIds=new Set();
+  if(searchTerm) for(const {n} of pos) if(n.label.toLowerCase().includes(searchTerm)) matchIds.add(n.id);
+
+  // Nodes
+  for(const {n,x,y,depth} of pos){
+    const col     = colors[n.id]||'#4a6070';
+    const hasKids = !!(n.children?.length);
+    const isRoot  = depth===0;
+    const isL1    = depth===1;
+
+    const el=document.createElement('div');
+    el.className='node'+(hasKids?'':' leaf');
+    el.dataset.id=n.id;
+    el.style.cssText=`left:${x}px;top:${y}px;width:${NW}px;height:${NH}px;`;
+
+    if(isRoot||isL1){
+      el.style.background=col;
+      el.style.boxShadow=`0 2px 14px ${col}38`;
+    } else if(depth===2){
+      el.style.background='#fff';
+      el.style.borderLeft=`4px solid ${col}`;
+      el.style.border=`1px solid #e2ddd6`;
+      el.style.borderLeft=`4px solid ${col}`;
+      el.style.boxShadow='0 1px 6px rgba(28,43,58,.07)';
+    } else {
+      el.style.background='var(--surface)';
+      el.style.border=`1px solid #e6e1d8`;
+      el.style.borderLeft=`3px solid ${col}`;
+    }
+
+    if(searchTerm){
+      if(matchIds.has(n.id)) el.classList.add('highlighted');
+      else el.classList.add('dimmed');
+    }
+
+    const txtCol=(isRoot||isL1)?'#fff':depth===2?'#1c2b3a':'#3a4f62';
+    const txtSz =isRoot?'13.5px':isL1?'12.5px':depth===2?'11.5px':'11px';
+    const badge =(!n.open&&hasKids)?`<span class="node-count" style="color:${txtCol}">${n.children.length}</span>`:'';
+    const chevron=hasKids?`<span class="node-chevron${n.open?' open':''}" style="color:${txtCol}">▶</span>`:'';
+
+    el.innerHTML=`<div class="node-body">
+      <span class="node-lbl" style="color:${txtCol};font-size:${txtSz}">${n.label}</span>
+      ${badge}${chevron}
+    </div>`;
+
+    // Single click (with dblclick guard): toggle children
+    // Double-click: rename (works on ALL nodes including leaves)
+    let clickTimer=null;
+    if(hasKids){
+      el.addEventListener('click', e=>{
+        if(e.defaultPrevented) return;
+        clearTimeout(clickTimer);
+        clickTimer=setTimeout(()=>toggle(n.id), 220);
+      });
+    }
+    el.addEventListener('dblclick', e=>{
+      e.preventDefault();
+      clearTimeout(clickTimer);
+      startRename(n.id);
+    });
+    // Right-click: context menu
+    el.addEventListener('contextmenu', e=>{ e.preventDefault(); showCtxMenu(n.id, e.clientX, e.clientY, depth); });
+
+    canvas.appendChild(el);
+  }
+}
+
+// ════════════════════════════════════════════════
+// CONTEXT MENU
+// ════════════════════════════════════════════════
+function showCtxMenu(id, x, y, depth=99) {
+  ctxTargetId=id;
+  const isCustom = id.startsWith('u_');
+  const isL1node = depth===1;
+  document.getElementById('ctx-delete').classList.toggle('disabled', !isCustom);
+  document.getElementById('ctx-color').style.display = isL1node ? 'flex' : 'none';
+  const menu=document.getElementById('ctx-menu');
+  menu.style.display='block';
+  menu.style.left=x+'px'; menu.style.top=y+'px';
+  requestAnimationFrame(()=>{
+    const r=menu.getBoundingClientRect();
+    if(r.right>window.innerWidth-8) menu.style.left=(x-r.width)+'px';
+    if(r.bottom>window.innerHeight-8) menu.style.top=(y-r.height)+'px';
+  });
+}
+function hideCtxMenu(){ document.getElementById('ctx-menu').style.display='none'; ctxTargetId=null; }
+
+function ctxDoAdd(){
+  const id=ctxTargetId; hideCtxMenu();
+  openModal('add', id);
+}
+function ctxDoRename(){
+  const id=ctxTargetId; hideCtxMenu();
+  startRename(id);
+}
+function ctxDoColor(){
+  const id=ctxTargetId; hideCtxMenu();
+  const n=findNode(id); if(!n) return;
+  const picker=document.createElement('input');
+  picker.type='color';
+  picker.value=n.color||'#166638';
+  picker.style.cssText='position:fixed;opacity:0;pointer-events:none;top:0;left:0;';
+  document.body.appendChild(picker);
+  picker.addEventListener('input', e=>{ n.color=e.target.value; render(); });
+  picker.addEventListener('change', e=>{ n.color=e.target.value; save(); render(); picker.remove(); });
+  picker.addEventListener('blur', ()=>picker.remove());
+  picker.click();
+}
+function ctxDoDelete(){
+  const id=ctxTargetId; hideCtxMenu();
+  if(!id.startsWith('u_')) return;
+  const n=findNode(id); if(!n) return;
+  if(!confirm(`Delete "${n.label}"?`)) return;
+  const parent=findParent(id);
+  if(parent) parent.children=parent.children.filter(c=>c.id!==id);
+  save(); render();
+}
+
+document.addEventListener('click', e=>{
+  if(!e.target.closest('#ctx-menu')) hideCtxMenu();
+});
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape'){ hideCtxMenu(); closeModal(); }
+  if((e.metaKey||e.ctrlKey)&&e.key==='f'){
+    e.preventDefault();
+    document.getElementById('search-input').focus();
+    document.getElementById('search-input').select();
+  }
+});
+
+// ════════════════════════════════════════════════
+// ADD / RENAME MODAL
+// ════════════════════════════════════════════════
+let modalTargetId=null;
+function openModal(mode, id){
+  modalMode=mode; modalTargetId=id;
+  const n=findNode(id);
+  const overlay=document.getElementById('modal-overlay');
+  const inp=document.getElementById('modal-input');
+  if(mode==='add'){
+    document.getElementById('modal-title').textContent='Add child node';
+    document.getElementById('modal-sub').innerHTML=`Under: <em>${n?.label||id}</em>`;
+    document.getElementById('modal-ok').textContent='Add';
+    inp.value=''; inp.placeholder='Node label…';
+  } else {
+    document.getElementById('modal-title').textContent='Rename node';
+    document.getElementById('modal-sub').innerHTML='';
+    document.getElementById('modal-ok').textContent='Save';
+    inp.value=n?.label||'';
+  }
+  overlay.style.display='flex';
+  setTimeout(()=>{ inp.focus(); inp.select(); }, 60);
+}
+function closeModal(e){
+  if(e&&e.target!==document.getElementById('modal-overlay')) return;
+  document.getElementById('modal-overlay').style.display='none';
+  modalTargetId=null;
+}
+function confirmModal(){
+  const v=document.getElementById('modal-input').value.trim();
+  if(!v){ document.getElementById('modal-input').focus(); return; }
+  if(modalMode==='add'){
+    const p=findNode(modalTargetId); if(!p) return;
+    if(!p.children) p.children=[];
+    p.children.push({id:'u_'+Date.now(),label:v,open:false});
+    p.open=true;
+  } else {
+    const n=findNode(modalTargetId); if(n) n.label=v;
+  }
+  save(); render();
+  document.getElementById('modal-overlay').style.display='none';
+  modalTargetId=null;
+}
+document.getElementById('modal-input').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){ e.preventDefault(); confirmModal(); }
+  if(e.key==='Escape') closeModal();
+  e.stopPropagation();
+});
+
+// ════════════════════════════════════════════════
+// INLINE RENAME (double-click)
+// ════════════════════════════════════════════════
+function startRename(id){
+  const el=document.querySelector(`.node[data-id="${id}"]`); if(!el) return;
+  const n=findNode(id); if(!n) return;
+  const rect=el.getBoundingClientRect();
+  const inp=document.createElement('input');
+  inp.className='rename-input';
+  inp.value=n.label;
+  inp.style.cssText=`left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;font-size:${rect.height>50?'13.5':'11.5'}px;`;
+  document.body.appendChild(inp);
+  inp.focus(); inp.select();
+  let committed=false;
+  function commit(){
+    if(committed) return; committed=true;
+    const v=inp.value.trim();
+    if(v&&v!==n.label){ n.label=v; save(); render(); }
+    inp.remove();
+  }
+  inp.addEventListener('keydown',e=>{
+    if(e.key==='Enter') commit();
+    if(e.key==='Escape'){ inp.remove(); }
+    e.stopPropagation();
+  });
+  inp.addEventListener('blur', commit);
+}
+
+// ════════════════════════════════════════════════
+// PAN & ZOOM (trackpad-optimised)
+// ════════════════════════════════════════════════
+const vp=document.getElementById('viewport');
+
+function applyTransform(anim=false){
+  const c=document.getElementById('canvas');
+  if(anim){ c.style.transition='transform .3s cubic-bezier(.25,.8,.25,1)'; setTimeout(()=>c.style.transition='',320); }
+  c.style.transform=`translate(${pan.x}px,${pan.y}px) scale(${zoom})`;
+}
+function animateTo(tx,ty,tz){
+  pan.x=tx; pan.y=ty; zoom=tz; applyTransform(true);
+}
+
+vp.addEventListener('wheel',e=>{
+  e.preventDefault();
+  if(e.ctrlKey){
+    const f=e.deltaY<0?1.06:.944;
+    const nz=Math.min(3,Math.max(.15,zoom*f));
+    const r=vp.getBoundingClientRect();
+    const mx=e.clientX-r.left, my=e.clientY-r.top;
+    pan.x=mx-(mx-pan.x)*(nz/zoom);
+    pan.y=my-(my-pan.y)*(nz/zoom);
+    zoom=nz;
+  } else {
+    pan.x-=e.deltaX; pan.y-=e.deltaY;
+  }
+  applyTransform();
+},{passive:false});
+
+let drag=false,dO={x:0,y:0},pO={x:0,y:0};
+vp.addEventListener('mousedown',e=>{
+  if(e.target.closest('.node')||e.target.closest('#ctx-menu')||e.target.closest('#modal-overlay')||e.target.closest('.rename-input')) return;
+  drag=true; dO={x:e.clientX,y:e.clientY}; pO={...pan};
+  vp.style.cursor='grabbing';
+});
+window.addEventListener('mousemove',e=>{ if(!drag) return; pan.x=pO.x+(e.clientX-dO.x); pan.y=pO.y+(e.clientY-dO.y); applyTransform(); });
+window.addEventListener('mouseup',()=>{ drag=false; vp.style.cursor='default'; });
+
+function fitView(){
+  const pos=[]; layout(tree,0,subH(tree)/2+20,pos);
+  if(!pos.length) return;
+  const pad=70;
+  const x0=pos.reduce((m,p)=>Math.min(m,p.x),Infinity)-pad;
+  const y0=pos.reduce((m,p)=>Math.min(m,p.y),Infinity)-pad;
+  const x1=pos.reduce((m,p)=>Math.max(m,p.x+NW),-Infinity)+pad;
+  const y1=pos.reduce((m,p)=>Math.max(m,p.y+NH),-Infinity)+pad;
+  const vw=window.innerWidth, vh=window.innerHeight-60;
+  const nz=Math.min(vw/(x1-x0), vh/(y1-y0), 1.4);
+  animateTo((vw-(x1-x0)*nz)/2-x0*nz, (vh-(y1-y0)*nz)/2-y0*nz+30, nz);
+}
+
+// ════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════
+render();
+setDepth(1);
+</script>
+</body>
+</html>
