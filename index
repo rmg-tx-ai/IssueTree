@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <title>VZ Issue Tree</title>
+  <title>IssueTree</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -37,7 +37,160 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* ── Toolbar ── */
+    /* ── Views ── */
+    #home-view, #editor-view { position: fixed; inset: 0; }
+    #home-view  { overflow-y: auto; z-index: 10; }
+    #editor-view { z-index: 5; }
+
+    /* ══════════════════════════════════════
+       HOME SCREEN
+    ══════════════════════════════════════ */
+    #home-inner {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 60px 32px 80px;
+    }
+    #home-header {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      margin-bottom: 44px;
+    }
+    #home-logo {
+      display: block;
+      font-family: 'Libre Baskerville', serif;
+      font-size: 32px; color: var(--navy);
+      letter-spacing: -1px; line-height: 1;
+    }
+    #home-tagline {
+      display: block;
+      font-size: 12px; color: var(--faint);
+      font-weight: 500; margin-top: 7px; letter-spacing: .3px;
+    }
+    #btn-new-tree {
+      background: var(--navy); color: #fff;
+      border: none; border-radius: 10px;
+      padding: 10px 20px; font-size: 13px; font-weight: 600;
+      font-family: inherit; cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      transition: background .12s, transform .1s;
+    }
+    #btn-new-tree:hover { background: #2d3f50; transform: translateY(-1px); }
+
+    #home-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(228px, 1fr));
+      gap: 14px;
+    }
+    .tree-card {
+      background: rgba(250,249,246,.96);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 16px 14px;
+      cursor: pointer; position: relative;
+      transition: transform .12s, box-shadow .12s;
+      box-shadow: var(--shadow-sm);
+    }
+    .tree-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .tree-card-name {
+      font-family: 'Libre Baskerville', serif;
+      font-size: 13.5px; color: var(--navy);
+      line-height: 1.35; margin-bottom: 10px;
+      padding-right: 26px; word-break: break-word;
+    }
+    .tree-card-meta { font-size: 10.5px; color: var(--faint); font-weight: 500; }
+    .tree-card-btn {
+      position: absolute; top: 10px; right: 10px;
+      background: transparent; border: none;
+      color: var(--faint); font-size: 15px; line-height: 1;
+      cursor: pointer; border-radius: 6px;
+      width: 26px; height: 26px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .1s, color .1s;
+    }
+    .tree-card-btn:hover { background: var(--border); color: var(--mid); }
+
+    #home-empty {
+      text-align: center; padding: 80px 20px;
+      color: var(--faint); font-size: 14px;
+    }
+    #home-empty .empty-cta {
+      margin-top: 14px; background: transparent;
+      border: 1.5px solid var(--border); border-radius: 8px;
+      padding: 8px 16px; font-size: 12px; font-weight: 600;
+      color: var(--mid); cursor: pointer; font-family: inherit;
+      transition: background .12s;
+    }
+    #home-empty .empty-cta:hover { background: var(--border); color: var(--ink); }
+
+    /* ── Card context menu ── */
+    #card-menu {
+      position: fixed; z-index: 1100;
+      background: var(--white); border-radius: 11px; padding: 5px;
+      min-width: 158px;
+      box-shadow: var(--shadow-lg), 0 0 0 1px var(--border);
+      display: none; animation: menuIn .12s ease;
+    }
+    .card-item {
+      display: flex; align-items: center; gap: 9px;
+      padding: 8px 12px; border-radius: 7px;
+      font-size: 12px; font-weight: 500; color: var(--ink);
+      cursor: pointer; transition: background .1s;
+    }
+    .card-item:hover { background: var(--bg); }
+    .card-item.danger { color: #b03020; }
+    .card-item.danger:hover { background: #fdecea; }
+    .card-sep { height: 1px; background: var(--border); margin: 4px 5px; }
+
+    /* ── New Tree Modal ── */
+    #new-tree-overlay {
+      position: fixed; inset: 0; z-index: 1200;
+      background: rgba(28,43,58,.18);
+      backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+      display: none; align-items: center; justify-content: center;
+    }
+    #new-tree-modal {
+      background: var(--white); border-radius: 16px;
+      padding: 26px 26px 22px; width: 400px;
+      box-shadow: var(--shadow-lg), 0 0 0 1px var(--border);
+      animation: modalIn .18s cubic-bezier(.34,1.4,.64,1);
+    }
+    #ntm-title {
+      font-family: 'Libre Baskerville', serif;
+      font-size: 16px; color: var(--navy); margin-bottom: 18px;
+    }
+    .ntm-label {
+      font-size: 10.5px; font-weight: 700; color: var(--mid);
+      letter-spacing: .5px; text-transform: uppercase; margin-bottom: 7px;
+    }
+    #ntm-name {
+      width: 100%; padding: 9px 12px;
+      border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: 13px; font-family: inherit; color: var(--ink);
+      outline: none; background: var(--surface);
+      transition: border-color .15s; margin-bottom: 18px;
+    }
+    #ntm-name:focus { border-color: var(--teal); background: #fff; }
+    #ntm-templates {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 8px; margin-bottom: 20px;
+    }
+    .tpl-opt input[type="radio"] { display: none; }
+    .tpl-card {
+      border: 1.5px solid var(--border); border-radius: 9px;
+      padding: 10px 12px; cursor: pointer;
+      background: var(--surface);
+      transition: border-color .12s, background .12s;
+    }
+    .tpl-opt input:checked + .tpl-card {
+      border-color: var(--teal);
+      background: rgba(14,77,108,.06);
+    }
+    .tpl-card-title { font-size: 11.5px; font-weight: 700; color: var(--ink); margin-bottom: 2px; }
+    .tpl-card-desc  { font-size: 10px; color: var(--faint); }
+    .ntm-btns { display: flex; gap: 8px; justify-content: flex-end; }
+
+    /* ══════════════════════════════════════
+       EDITOR — TOOLBAR
+    ══════════════════════════════════════ */
     #toolbar {
       position: fixed; top: 16px; left: 50%;
       transform: translateX(-50%);
@@ -54,10 +207,15 @@
     #tb-title {
       font-family: 'Libre Baskerville', serif;
       font-size: 13px; color: var(--navy);
-      margin-right: 4px; letter-spacing: -.1px;
+      letter-spacing: -.1px; cursor: text;
+      border-radius: 4px; padding: 2px 5px;
+      outline: none; min-width: 30px; max-width: 180px;
+      overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+      transition: background .1s;
     }
+    #tb-title:hover  { background: rgba(28,43,58,.05); }
+    #tb-title:focus  { background: #fff; box-shadow: 0 0 0 2px var(--teal); }
     .tsep { width: 1px; height: 18px; background: var(--border); margin: 0 2px; }
-
     .tbtn {
       background: transparent; border: none;
       color: var(--mid); border-radius: 7px;
@@ -65,41 +223,49 @@
       font-family: inherit; cursor: pointer;
       transition: background .12s, color .12s;
     }
-    .tbtn:hover { background: var(--border); color: var(--ink); }
-    .tbtn.on { background: var(--navy); color: #fff; }
+    .tbtn:hover  { background: var(--border); color: var(--ink); }
+    .tbtn.on     { background: var(--navy); color: #fff; }
     .tbtn.on:hover { background: #2d3f50; }
     .tbtn.danger { color: #b03020; }
     .tbtn.danger:hover { background: #fdecea; }
 
     /* Search */
-    .srch {
-      position: relative; display: flex; align-items: center;
-    }
-    .srch-icon {
-      position: absolute; left: 8px;
-      color: var(--faint); font-size: 12px; pointer-events: none;
-    }
+    .srch { position: relative; display: flex; align-items: center; }
+    .srch-icon { position: absolute; left: 8px; color: var(--faint); font-size: 12px; pointer-events: none; }
     #search-input {
       padding: 5px 26px 5px 26px;
-      border: 1.5px solid var(--border);
-      border-radius: 7px; font-size: 11.5px;
-      font-family: inherit; color: var(--ink);
-      background: var(--surface); outline: none;
-      width: 148px;
+      border: 1.5px solid var(--border); border-radius: 7px;
+      font-size: 11.5px; font-family: inherit; color: var(--ink);
+      background: var(--surface); outline: none; width: 148px;
       transition: border-color .15s, width .2s, background .15s;
     }
     #search-input:focus { border-color: var(--teal); width: 186px; background: #fff; }
     #search-input::placeholder { color: var(--faint); }
-    #srch-clear {
-      position: absolute; right: 7px; font-size: 10px;
-      color: var(--faint); cursor: pointer; display: none;
-    }
+    #srch-clear { position: absolute; right: 7px; font-size: 10px; color: var(--faint); cursor: pointer; display: none; }
     #srch-clear:hover { color: var(--mid); }
     #save-dot {
       width: 6px; height: 6px; border-radius: 50%;
       background: var(--faint); margin-left: 2px;
       transition: background .3s;
     }
+
+    /* Export dropdown */
+    #export-wrap { position: relative; }
+    #export-menu {
+      position: absolute; top: calc(100% + 6px); right: 0;
+      background: var(--white); border-radius: 10px; padding: 5px;
+      min-width: 128px;
+      box-shadow: var(--shadow-lg), 0 0 0 1px var(--border);
+      display: none; z-index: 600; animation: menuIn .12s ease;
+    }
+    .exp-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 11px; border-radius: 7px;
+      font-size: 12px; font-weight: 500; color: var(--ink);
+      cursor: pointer; transition: background .1s;
+    }
+    .exp-item:hover { background: var(--bg); }
+    .exp-icon { width: 16px; text-align: center; font-size: 11px; color: var(--mid); }
 
     /* ── Hint ── */
     #hint {
@@ -124,12 +290,12 @@
       box-shadow: var(--shadow-sm), 0 0 0 1px var(--border);
       z-index: 200;
     }
-    .leg { display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; color: var(--mid); }
+    .leg     { display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; color: var(--mid); }
     .leg-dot { width: 8px; height: 8px; border-radius: 2px; }
 
     /* ── Canvas ── */
-    #viewport { width: 100vw; height: 100vh; overflow: hidden; position: relative; }
-    #canvas { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform; }
+    #viewport  { width: 100vw; height: 100vh; overflow: hidden; position: relative; }
+    #canvas    { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform; }
     #svg-layer { position: absolute; top: 0; left: 0; pointer-events: none; overflow: visible; }
 
     /* ── Nodes ── */
@@ -146,43 +312,29 @@
       box-shadow: 0 0 0 2.5px #e8a020, 0 4px 18px rgba(232,160,32,.2) !important;
       z-index: 2;
     }
-
-    .node-body {
-      display: flex; align-items: center;
-      height: 100%; padding: 0 10px 0 13px; gap: 7px;
-    }
-    .node-lbl { flex: 1; font-weight: 600; line-height: 1.3; }
-    .node-count {
-      font-size: 9px; font-weight: 700; letter-spacing: .3px;
-      background: rgba(0,0,0,.1); border-radius: 8px;
-      padding: 1px 6px; flex-shrink: 0;
-    }
-    .node-chevron {
-      flex-shrink: 0; font-size: 7px; opacity: .45;
-      transition: transform .2s; margin-left: 1px;
-    }
+    .node-body    { display: flex; align-items: center; height: 100%; padding: 0 10px 0 13px; gap: 7px; }
+    .node-lbl     { flex: 1; font-weight: 600; line-height: 1.3; }
+    .node-count   { font-size: 9px; font-weight: 700; letter-spacing: .3px; background: rgba(0,0,0,.1); border-radius: 8px; padding: 1px 6px; flex-shrink: 0; }
+    .node-chevron { flex-shrink: 0; font-size: 7px; opacity: .45; transition: transform .2s; margin-left: 1px; }
     .node-chevron.open { transform: rotate(90deg); }
 
     /* ── Context menu ── */
     #ctx-menu {
       position: fixed; z-index: 600;
-      background: var(--white);
-      border-radius: 11px; padding: 5px;
+      background: var(--white); border-radius: 11px; padding: 5px;
       min-width: 170px;
       box-shadow: var(--shadow-lg), 0 0 0 1px var(--border);
-      display: none;
-      animation: menuIn .12s ease;
+      display: none; animation: menuIn .12s ease;
     }
     @keyframes menuIn {
       from { opacity:0; transform: scale(.95) translateY(-4px); }
-      to   { opacity:1; transform: scale(1) translateY(0); }
+      to   { opacity:1; transform: scale(1)  translateY(0); }
     }
     .ctx-item {
       display: flex; align-items: center; gap: 9px;
       padding: 8px 12px; border-radius: 7px;
       font-size: 12px; font-weight: 500; color: var(--ink);
-      cursor: pointer;
-      transition: background .1s;
+      cursor: pointer; transition: background .1s;
     }
     .ctx-item:hover { background: var(--bg); }
     .ctx-item .ctx-icon { font-size: 13px; width: 16px; text-align: center; opacity: .7; }
@@ -208,15 +360,10 @@
     }
     @keyframes modalIn {
       from { opacity:0; transform: scale(.94) translateY(8px); }
-      to   { opacity:1; transform: scale(1) translateY(0); }
+      to   { opacity:1; transform: scale(1)  translateY(0); }
     }
-    #modal-title {
-      font-size: 13px; font-weight: 700; color: var(--navy);
-      margin-bottom: 4px;
-    }
-    #modal-sub {
-      font-size: 11px; color: var(--faint); margin-bottom: 14px;
-    }
+    #modal-title { font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+    #modal-sub   { font-size: 11px; color: var(--faint); margin-bottom: 14px; }
     #modal-input {
       width: 100%; padding: 9px 12px;
       border: 1.5px solid var(--border); border-radius: 8px;
@@ -225,24 +372,17 @@
       transition: border-color .15s;
     }
     #modal-input:focus { border-color: var(--teal); background: #fff; }
-    .modal-btns {
-      display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px;
-    }
-    .mbtn {
-      padding: 7px 16px; border-radius: 7px; border: none;
-      font-size: 12px; font-weight: 600; font-family: inherit;
-      cursor: pointer; transition: background .12s;
-    }
+    .modal-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+    .mbtn { padding: 7px 16px; border-radius: 7px; border: none; font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; transition: background .12s; }
     .mbtn.cancel { background: var(--bg); color: var(--mid); }
     .mbtn.cancel:hover { background: var(--border); }
     .mbtn.ok { background: var(--navy); color: #fff; }
     .mbtn.ok:hover { background: #2d3f50; }
 
-    /* Inline rename input (positioned over node) */
+    /* Inline rename input */
     .rename-input {
       position: fixed; z-index: 650;
-      border: 2px solid var(--teal);
-      border-radius: var(--r);
+      border: 2px solid var(--teal); border-radius: var(--r);
       background: #fff;
       font-family: 'Plus Jakarta Sans', sans-serif;
       font-weight: 600; color: var(--ink);
@@ -253,72 +393,168 @@
 </head>
 <body>
 
-<!-- ── Toolbar ── -->
-<div id="toolbar">
-  <span id="tb-title">VZ Issue Tree</span>
-  <div class="tsep"></div>
-  <div class="srch">
-    <span class="srch-icon">⌕</span>
-    <input id="search-input" type="text" placeholder="Search…" autocomplete="off" oninput="onSearch(this.value)"/>
-    <span id="srch-clear" onclick="clearSearch()">✕</span>
-  </div>
-  <div class="tsep"></div>
-  <button class="tbtn" id="btn-l1" onclick="setDepth(1)">L1</button>
-  <button class="tbtn" id="btn-l2" onclick="setDepth(2)">L2</button>
-  <button class="tbtn" id="btn-all" onclick="setDepth(99)">All</button>
-  <div class="tsep"></div>
-  <button class="tbtn" onclick="fitView()">Fit ⊡</button>
-  <div class="tsep"></div>
-  <button class="tbtn" onclick="exportJSON()" title="Download tree as JSON">↓ Export</button>
-  <button class="tbtn" onclick="document.getElementById('import-file').click()" title="Load a saved JSON tree">↑ Import</button>
-  <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(this)"/>
-  <div class="tsep"></div>
-  <button class="tbtn danger" onclick="hardReset()">Reset</button>
-  <div id="save-dot" title="Auto-saved"></div>
-</div>
-
-<!-- ── Hint ── -->
-<div id="hint">Scroll to pan &nbsp;·&nbsp; Pinch to zoom &nbsp;·&nbsp; Click to expand &nbsp;·&nbsp; <strong>Right-click</strong> any node to add, rename, or delete &nbsp;·&nbsp; <strong>Double-click</strong> to rename</div>
-
-<!-- ── Legend ── -->
-<div id="legend">
-  <div class="leg"><div class="leg-dot" style="background:var(--green)"></div>Pricing</div>
-  <div class="leg"><div class="leg-dot" style="background:var(--teal)"></div>Volume</div>
-  <div class="leg"><div class="leg-dot" style="background:var(--rust)"></div>Cost</div>
-</div>
-
-<!-- ── Canvas ── -->
-<div id="viewport">
-  <div id="canvas">
-    <svg id="svg-layer"></svg>
-  </div>
-</div>
-
-<!-- ── Context menu ── -->
-<div id="ctx-menu">
-  <div class="ctx-item" id="ctx-add"    onclick="ctxDoAdd()">   <span class="ctx-icon">＋</span> Add child node</div>
-  <div class="ctx-item" id="ctx-rename" onclick="ctxDoRename()"><span class="ctx-icon">✎</span> Rename</div>
-  <div class="ctx-item" id="ctx-color"  onclick="ctxDoColor()" style="display:none"><span class="ctx-icon">◉</span> Change color</div>
-  <div class="ctx-sep"></div>
-  <div class="ctx-item danger" id="ctx-delete" onclick="ctxDoDelete()"><span class="ctx-icon">✕</span> Delete node</div>
-</div>
-
-<!-- ── Add / Rename modal ── -->
-<div id="modal-overlay" onclick="closeModal(event)">
-  <div id="modal">
-    <div id="modal-title">Add child node</div>
-    <div id="modal-sub">Under: <span id="modal-parent-label"></span></div>
-    <input id="modal-input" type="text" placeholder="Node label…" />
-    <div class="modal-btns">
-      <button class="mbtn cancel" onclick="closeModal()">Cancel</button>
-      <button class="mbtn ok" id="modal-ok" onclick="confirmModal()">Add</button>
+<!-- ══════════════════════════════════════════════
+     HOME VIEW
+══════════════════════════════════════════════ -->
+<div id="home-view" style="display:none">
+  <div id="home-inner">
+    <div id="home-header">
+      <div>
+        <span id="home-logo">IssueTree</span>
+        <span id="home-tagline">Structured problem-solving</span>
+      </div>
+      <button id="btn-new-tree" onclick="showNewTreeModal()">+ New Tree</button>
+    </div>
+    <div id="home-grid"></div>
+    <div id="home-empty" style="display:none">
+      <p>No issue trees yet.</p>
+      <button class="empty-cta" onclick="showNewTreeModal()">Create your first tree →</button>
     </div>
   </div>
 </div>
 
+<!-- ══════════════════════════════════════════════
+     EDITOR VIEW
+══════════════════════════════════════════════ -->
+<div id="editor-view" style="display:none">
+
+  <!-- Toolbar -->
+  <div id="toolbar">
+    <button class="tbtn" onclick="goHome()" style="letter-spacing:-.3px;padding-left:7px">← Trees</button>
+    <div class="tsep"></div>
+    <span id="tb-title"
+          contenteditable="true"
+          spellcheck="false"
+          onblur="saveTitleEdit()"
+          onkeydown="handleTitleKeydown(event)">Tree</span>
+    <div class="tsep"></div>
+    <div class="srch">
+      <span class="srch-icon">⌕</span>
+      <input id="search-input" type="text" placeholder="Search…" autocomplete="off" oninput="onSearch(this.value)"/>
+      <span id="srch-clear" onclick="clearSearch()">✕</span>
+    </div>
+    <div class="tsep"></div>
+    <button class="tbtn" id="btn-l1"  onclick="setDepth(1)">L1</button>
+    <button class="tbtn" id="btn-l2"  onclick="setDepth(2)">L2</button>
+    <button class="tbtn" id="btn-all" onclick="setDepth(99)">All</button>
+    <div class="tsep"></div>
+    <button class="tbtn" onclick="fitView()">Fit ⊡</button>
+    <div class="tsep"></div>
+    <div id="export-wrap">
+      <button class="tbtn" id="btn-export" onclick="toggleExportMenu()">Export ▾</button>
+      <div id="export-menu">
+        <div class="exp-item" onclick="exportJSON()"><span class="exp-icon">{ }</span>JSON</div>
+        <div class="exp-item" onclick="exportPNG()"><span class="exp-icon">⬜</span>PNG</div>
+        <div class="exp-item" onclick="exportPDF()"><span class="exp-icon">▣</span>PDF</div>
+      </div>
+    </div>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(this)"/>
+    <button class="tbtn" onclick="document.getElementById('import-file').click()" title="Import JSON tree">↑ Import</button>
+    <div class="tsep"></div>
+    <div id="save-dot" title="Auto-saved"></div>
+  </div>
+
+  <!-- Hint -->
+  <div id="hint">Scroll to pan &nbsp;·&nbsp; Pinch to zoom &nbsp;·&nbsp; Click to expand &nbsp;·&nbsp; <strong>Right-click</strong> any node to add, rename, or delete &nbsp;·&nbsp; <strong>Double-click</strong> to rename</div>
+
+  <!-- Legend -->
+  <div id="legend">
+    <div class="leg"><div class="leg-dot" style="background:var(--green)"></div>Pricing</div>
+    <div class="leg"><div class="leg-dot" style="background:var(--teal)"></div>Volume</div>
+    <div class="leg"><div class="leg-dot" style="background:var(--rust)"></div>Cost</div>
+  </div>
+
+  <!-- Canvas -->
+  <div id="viewport">
+    <div id="canvas">
+      <svg id="svg-layer"></svg>
+    </div>
+  </div>
+
+  <!-- Context menu -->
+  <div id="ctx-menu">
+    <div class="ctx-item" id="ctx-add"    onclick="ctxDoAdd()">   <span class="ctx-icon">＋</span> Add child node</div>
+    <div class="ctx-item" id="ctx-rename" onclick="ctxDoRename()"><span class="ctx-icon">✎</span> Rename</div>
+    <div class="ctx-item" id="ctx-color"  onclick="ctxDoColor()" style="display:none"><span class="ctx-icon">◉</span> Change color</div>
+    <div class="ctx-sep"></div>
+    <div class="ctx-item danger" id="ctx-delete" onclick="ctxDoDelete()"><span class="ctx-icon">✕</span> Delete node</div>
+  </div>
+
+  <!-- Add / Rename modal -->
+  <div id="modal-overlay" onclick="closeModal(event)">
+    <div id="modal">
+      <div id="modal-title">Add child node</div>
+      <div id="modal-sub">Under: <span id="modal-parent-label"></span></div>
+      <input id="modal-input" type="text" placeholder="Node label…" />
+      <div class="modal-btns">
+        <button class="mbtn cancel" onclick="closeModal()">Cancel</button>
+        <button class="mbtn ok" id="modal-ok" onclick="confirmModal()">Add</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /editor-view -->
+
+<!-- ══════════════════════════════════════════════
+     NEW TREE MODAL  (always in DOM, above both views)
+══════════════════════════════════════════════ -->
+<div id="new-tree-overlay" onclick="if(event.target===this)hideNewTreeModal()">
+  <div id="new-tree-modal">
+    <div id="ntm-title">New Tree</div>
+    <div class="ntm-label">Name</div>
+    <input id="ntm-name" type="text" placeholder="My Issue Tree…" autocomplete="off"/>
+    <div class="ntm-label">Template</div>
+    <div id="ntm-templates">
+      <label class="tpl-opt">
+        <input type="radio" name="tpl" value="blank" checked/>
+        <div class="tpl-card">
+          <div class="tpl-card-title">Blank</div>
+          <div class="tpl-card-desc">Start from scratch</div>
+        </div>
+      </label>
+      <label class="tpl-opt">
+        <input type="radio" name="tpl" value="mckinsey"/>
+        <div class="tpl-card">
+          <div class="tpl-card-title">Issue Tree</div>
+          <div class="tpl-card-desc">McKinsey 3-branch</div>
+        </div>
+      </label>
+      <label class="tpl-opt">
+        <input type="radio" name="tpl" value="rca"/>
+        <div class="tpl-card">
+          <div class="tpl-card-title">Root Cause</div>
+          <div class="tpl-card-desc">4 fishbone branches</div>
+        </div>
+      </label>
+      <label class="tpl-opt">
+        <input type="radio" name="tpl" value="vz"/>
+        <div class="tpl-card">
+          <div class="tpl-card-title">VZ Telecom</div>
+          <div class="tpl-card-desc">Full performance levers</div>
+        </div>
+      </label>
+    </div>
+    <div class="ntm-btns">
+      <button class="mbtn cancel" onclick="hideNewTreeModal()">Cancel</button>
+      <button class="mbtn ok"     onclick="confirmNewTree()">Create Tree →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     CARD CONTEXT MENU  (global)
+══════════════════════════════════════════════ -->
+<div id="card-menu">
+  <div class="card-item" onclick="openTreeFromCard()">  <span style="width:16px;text-align:center;opacity:.65">→</span> Open</div>
+  <div class="card-item" onclick="renameTreeCard()">    <span style="width:16px;text-align:center;opacity:.65">✎</span> Rename</div>
+  <div class="card-item" onclick="duplicateTreeCard()"> <span style="width:16px;text-align:center;opacity:.65">⧉</span> Duplicate</div>
+  <div class="card-sep"></div>
+  <div class="card-item danger" onclick="deleteTreeCard()"><span style="width:16px;text-align:center;opacity:.65">✕</span> Delete</div>
+</div>
+
 <script>
 // ════════════════════════════════════════════════
-// DATA
+// DEFAULT TREE DATA
 // ════════════════════════════════════════════════
 const DEFAULT = {
   id:'root', label:'VZ — Performance Levers', open:true, color:'#1c2b3a',
@@ -509,47 +745,349 @@ const DEFAULT = {
 };
 
 // ════════════════════════════════════════════════
+// TEMPLATES
+// ════════════════════════════════════════════════
+const TEMPLATES = {
+  blank: {
+    id:'root', label:'New Issue Tree', open:true, color:'#1c2b3a', children:[]
+  },
+  mckinsey: {
+    id:'root', label:'Issue Tree', open:true, color:'#1c2b3a',
+    children:[
+      {id:'t1',label:'Issue 1',open:false,color:'#166638',children:[]},
+      {id:'t2',label:'Issue 2',open:false,color:'#0e4d6c',children:[]},
+      {id:'t3',label:'Issue 3',open:false,color:'#7d3512',children:[]},
+    ]
+  },
+  rca: {
+    id:'root', label:'Root Cause Analysis', open:true, color:'#1c2b3a',
+    children:[
+      {id:'t1',label:'People',    open:false, color:'#166638', children:[]},
+      {id:'t2',label:'Process',   open:false, color:'#0e4d6c', children:[]},
+      {id:'t3',label:'Technology',open:false, color:'#7d3512', children:[]},
+      {id:'t4',label:'External',  open:false, color:'#4a3580', children:[]},
+    ]
+  },
+  vz: null  // assigned below after DEFAULT is defined
+};
+TEMPLATES.vz = DEFAULT;
+
+// ════════════════════════════════════════════════
+// MULTI-TREE STORAGE
+// ════════════════════════════════════════════════
+const STORE_KEY = 'issuetrees_v1';
+
+function loadStore() {
+  try {
+    const s = localStorage.getItem(STORE_KEY);
+    return s ? JSON.parse(s) : { trees:{}, activeId:null };
+  } catch(e) { return { trees:{}, activeId:null }; }
+}
+function saveStore(store) { localStorage.setItem(STORE_KEY, JSON.stringify(store)); }
+function genId() { return 'tree_' + Math.random().toString(36).slice(2,9) + '_' + Date.now(); }
+
+function migrateIfNeeded() {
+  const old = localStorage.getItem('vzTree_v4');
+  if (!old) return;
+  const store = loadStore();
+  if (Object.keys(store.trees).length > 0) { localStorage.removeItem('vzTree_v4'); return; }
+  try {
+    const data = JSON.parse(old);
+    const id = genId();
+    store.trees[id] = {
+      id, name: data.label || 'VZ Performance Levers',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      data
+    };
+    store.activeId = id;
+    saveStore(store);
+    localStorage.removeItem('vzTree_v4');
+  } catch(e) {}
+}
+
+function countNodes(n) { return 1 + (n.children||[]).reduce((s,c) => s + countNodes(c), 0); }
+
+function relTime(iso) {
+  const ms = Date.now() - new Date(iso).getTime();
+  const m = ms/60000, h = m/60, d = h/24;
+  if (d > 30)  return new Date(iso).toLocaleDateString();
+  if (d >= 2)  return Math.floor(d) + 'd ago';
+  if (d >= 1)  return 'Yesterday';
+  if (h >= 1)  return Math.floor(h) + 'h ago';
+  if (m >= 1)  return Math.floor(m) + 'min ago';
+  return 'Just now';
+}
+
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ════════════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════════════
-let tree           = loadTree();
-let pan            = {x:0,y:0};
+let tree           = null;
+let currentTreeId  = null;
+let pan            = {x:0, y:0};
 let zoom           = 1;
 let ctxTargetId    = null;
-let modalMode      = 'add';   // 'add' or 'rename'
+let modalMode      = 'add';
 let searchActive   = false;
 let savedOpenState = null;
 
 // ════════════════════════════════════════════════
+// ROUTER
+// ════════════════════════════════════════════════
+function initRouter() {
+  migrateIfNeeded();
+  window.addEventListener('hashchange', route);
+  route();
+}
+
+function route() {
+  const hash = window.location.hash || '#/';
+  if (hash.startsWith('#/tree/')) {
+    const id = hash.slice(7);
+    showView('editor');
+    openTree(id);
+  } else {
+    showView('home');
+    renderHome();
+    if (hash === '#/new') showNewTreeModal();
+  }
+}
+
+function showView(v) {
+  document.getElementById('home-view').style.display   = v === 'home'   ? 'block' : 'none';
+  document.getElementById('editor-view').style.display = v === 'editor' ? 'block' : 'none';
+}
+
+function goHome() { window.location.hash = '#/'; }
+
+// ════════════════════════════════════════════════
+// HOME SCREEN
+// ════════════════════════════════════════════════
+function renderHome() {
+  const store  = loadStore();
+  const trees  = Object.values(store.trees)
+    .sort((a,b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+  const grid   = document.getElementById('home-grid');
+  const empty  = document.getElementById('home-empty');
+  grid.innerHTML = '';
+
+  if (!trees.length) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  trees.forEach(t => {
+    const n   = countNodes(t.data);
+    const div = document.createElement('div');
+    div.className = 'tree-card';
+    div.innerHTML = `
+      <div class="tree-card-name">${escHtml(t.name)}</div>
+      <div class="tree-card-meta">${n} node${n!==1?'s':''} &nbsp;·&nbsp; ${relTime(t.updatedAt)}</div>
+      <button class="tree-card-btn" title="Options" onclick="showCardMenu(event,'${escHtml(t.id)}')">···</button>
+    `;
+    div.addEventListener('click', e => {
+      if (e.target.closest('.tree-card-btn')) return;
+      window.location.hash = '#/tree/' + t.id;
+    });
+    grid.appendChild(div);
+  });
+}
+
+// Card context menu
+let cardMenuTargetId = null;
+
+function showCardMenu(e, id) {
+  e.stopPropagation();
+  cardMenuTargetId = id;
+  const menu = document.getElementById('card-menu');
+  menu.style.display = 'block';
+  menu.style.left = e.clientX + 'px';
+  menu.style.top  = e.clientY + 'px';
+  requestAnimationFrame(() => {
+    const r = menu.getBoundingClientRect();
+    if (r.right  > window.innerWidth  - 8) menu.style.left = (e.clientX - r.width)  + 'px';
+    if (r.bottom > window.innerHeight - 8) menu.style.top  = (e.clientY - r.height) + 'px';
+  });
+}
+function hideCardMenu() { document.getElementById('card-menu').style.display='none'; cardMenuTargetId=null; }
+
+function openTreeFromCard() {
+  const id = cardMenuTargetId; hideCardMenu();
+  window.location.hash = '#/tree/' + id;
+}
+function renameTreeCard() {
+  const id = cardMenuTargetId; hideCardMenu();
+  const store = loadStore();
+  const t = store.trees[id]; if (!t) return;
+  const name = prompt('Rename tree:', t.name);
+  if (!name || !name.trim()) return;
+  t.name = name.trim();
+  saveStore(store);
+  renderHome();
+}
+function duplicateTreeCard() {
+  const id = cardMenuTargetId; hideCardMenu();
+  const store = loadStore();
+  const t = store.trees[id]; if (!t) return;
+  const newId = genId();
+  store.trees[newId] = {
+    id: newId,
+    name: t.name + ' (copy)',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    data: clone(t.data)
+  };
+  saveStore(store);
+  renderHome();
+}
+function deleteTreeCard() {
+  const id = cardMenuTargetId; hideCardMenu();
+  const store = loadStore();
+  const t = store.trees[id]; if (!t) return;
+  if (!confirm('Delete "' + t.name + '"? This cannot be undone.')) return;
+  delete store.trees[id];
+  if (store.activeId === id) store.activeId = null;
+  saveStore(store);
+  renderHome();
+}
+
+// New tree modal
+function showNewTreeModal() {
+  document.getElementById('new-tree-overlay').style.display = 'flex';
+  const inp = document.getElementById('ntm-name');
+  inp.value = '';
+  document.querySelector('input[name="tpl"][value="blank"]').checked = true;
+  setTimeout(() => inp.focus(), 60);
+}
+function hideNewTreeModal() {
+  document.getElementById('new-tree-overlay').style.display = 'none';
+  if (window.location.hash === '#/new') history.replaceState(null, '', '#/');
+}
+function confirmNewTree() {
+  const name   = document.getElementById('ntm-name').value.trim() || 'Untitled Tree';
+  const tplKey = document.querySelector('input[name="tpl"]:checked')?.value || 'blank';
+  const tplData = TEMPLATES[tplKey] || TEMPLATES.blank;
+  const newId  = genId();
+  const store  = loadStore();
+  const data   = clone(tplData);
+  // Sync root label to tree name for non-VZ templates
+  if (tplKey !== 'vz') data.label = name;
+  store.trees[newId] = {
+    id: newId, name,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    data
+  };
+  store.activeId = newId;
+  saveStore(store);
+  hideNewTreeModal();
+  window.location.hash = '#/tree/' + newId;
+}
+
+document.getElementById('ntm-name').addEventListener('keydown', e => {
+  if (e.key === 'Enter')  { e.preventDefault(); confirmNewTree(); }
+  if (e.key === 'Escape') hideNewTreeModal();
+  e.stopPropagation();
+});
+
+// ════════════════════════════════════════════════
+// OPEN TREE  (enter editor for a specific tree id)
+// ════════════════════════════════════════════════
+function openTree(id) {
+  const store = loadStore();
+  const rec   = store.trees[id];
+  if (!rec) { window.location.hash = '#/'; return; }
+
+  currentTreeId = id;
+  tree = clone(rec.data);
+  store.activeId = id;
+  saveStore(store);
+
+  document.getElementById('tb-title').textContent = rec.name;
+  clearSearch();
+  render();
+  setDepth(1);
+}
+
+// Editable toolbar title
+function saveTitleEdit() {
+  const el = document.getElementById('tb-title');
+  const v  = el.textContent.trim();
+  if (!currentTreeId) return;
+  const store = loadStore();
+  if (!store.trees[currentTreeId]) return;
+  if (v) {
+    store.trees[currentTreeId].name = v;
+    saveStore(store);
+  } else {
+    el.textContent = store.trees[currentTreeId].name;
+  }
+}
+function handleTitleKeydown(e) {
+  if (e.key === 'Enter')  { e.preventDefault(); e.target.blur(); }
+  if (e.key === 'Escape') {
+    const store = loadStore();
+    if (currentTreeId && store.trees[currentTreeId])
+      e.target.textContent = store.trees[currentTreeId].name;
+    e.target.blur();
+  }
+  e.stopPropagation();
+}
+
+// ════════════════════════════════════════════════
 // PERSISTENCE
 // ════════════════════════════════════════════════
-function loadTree() {
-  try {
-    const s = localStorage.getItem('vzTree_v4');
-    return s ? JSON.parse(s) : clone(DEFAULT);
-  } catch(e) { return clone(DEFAULT); }
-}
 function save() {
-  localStorage.setItem('vzTree_v4', JSON.stringify(tree));
+  if (!currentTreeId || !tree) return;
+  const store = loadStore();
+  if (store.trees[currentTreeId]) {
+    store.trees[currentTreeId].data      = tree;
+    store.trees[currentTreeId].updatedAt = new Date().toISOString();
+    saveStore(store);
+  }
   const d = document.getElementById('save-dot');
-  d.style.background = '#60b87a';
-  clearTimeout(save._t);
-  save._t = setTimeout(()=>d.style.background='var(--faint)', 1200);
+  if (d) {
+    d.style.background = '#60b87a';
+    clearTimeout(save._t);
+    save._t = setTimeout(() => d.style.background = 'var(--faint)', 1200);
+  }
 }
 function clone(o) { return JSON.parse(JSON.stringify(o)); }
+
 function hardReset() {
-  if (!confirm('Reset to defaults? All custom nodes and edits will be removed.')) return;
-  localStorage.removeItem('vzTree_v4');
-  tree = clone(DEFAULT); clearSearch(); render(); fitView();
+  if (!currentTreeId) return;
+  if (!confirm('Reset this tree to the VZ default? All edits will be lost.')) return;
+  const store = loadStore();
+  if (store.trees[currentTreeId]) {
+    store.trees[currentTreeId].data      = clone(DEFAULT);
+    store.trees[currentTreeId].updatedAt = new Date().toISOString();
+    saveStore(store);
+    tree = clone(DEFAULT);
+  }
+  clearSearch(); render(); fitView();
 }
+
+// ════════════════════════════════════════════════
+// EXPORT / IMPORT
+// ════════════════════════════════════════════════
 function exportJSON() {
-  const slug = tree.label.replace(/\s+/g,'-').toLowerCase().replace(/[^a-z0-9-]/g,'');
-  const date = new Date().toISOString().slice(0,10);
-  const blob = new Blob([JSON.stringify(tree, null, 2)], {type:'application/json'});
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
+  hideExportMenu();
+  if (!tree) return;
+  const store = loadStore();
+  const name  = store.trees[currentTreeId]?.name || 'tree';
+  const slug  = name.replace(/\s+/g,'-').toLowerCase().replace(/[^a-z0-9-]/g,'');
+  const date  = new Date().toISOString().slice(0,10);
+  const blob  = new Blob([JSON.stringify(tree,null,2)], {type:'application/json'});
+  const url   = URL.createObjectURL(blob);
+  const a     = document.createElement('a');
   a.href = url; a.download = `issue-tree-${slug}-${date}.json`;
   a.click(); URL.revokeObjectURL(url);
 }
+
 function importJSON(input) {
   const file = input.files[0]; if (!file) return;
   const reader = new FileReader();
@@ -557,7 +1095,7 @@ function importJSON(input) {
     try {
       const parsed = JSON.parse(e.target.result);
       if (!parsed.id || !parsed.label) { alert('Invalid issue tree JSON.'); return; }
-      if (!confirm(`Load "${parsed.label}"? This will replace your current tree.`)) return;
+      if (!confirm('Load "' + parsed.label + '"? This will replace the current tree.')) return;
       tree = parsed; save(); clearSearch(); render(); fitView();
     } catch(err) { alert('Could not parse JSON: ' + err.message); }
     input.value = '';
@@ -565,26 +1103,76 @@ function importJSON(input) {
   reader.readAsText(file);
 }
 
+// Export dropdown
+function toggleExportMenu() {
+  const m = document.getElementById('export-menu');
+  m.style.display = m.style.display === 'block' ? 'none' : 'block';
+}
+function hideExportMenu() { document.getElementById('export-menu').style.display = 'none'; }
+
+async function exportPNG() {
+  hideExportMenu();
+  if (!window.html2canvas) {
+    alert('PNG export requires an internet connection (html2canvas CDN not loaded).');
+    return;
+  }
+  const c = document.getElementById('canvas');
+  const savedT = c.style.transform;
+  c.style.transform = 'none';
+  try {
+    const store = loadStore();
+    const name  = store.trees[currentTreeId]?.name || 'tree';
+    const slug  = name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+    const cap   = await html2canvas(c, { backgroundColor:'#f2efe9', scale:2, useCORS:true, logging:false });
+    const a = document.createElement('a');
+    a.download = slug + '-' + new Date().toISOString().slice(0,10) + '.png';
+    a.href = cap.toDataURL('image/png');
+    a.click();
+  } finally { c.style.transform = savedT; }
+}
+
+async function exportPDF() {
+  hideExportMenu();
+  if (!window.html2canvas || !window.jspdf) {
+    alert('PDF export requires an internet connection (CDN libraries not loaded).');
+    return;
+  }
+  const c = document.getElementById('canvas');
+  const savedT = c.style.transform;
+  c.style.transform = 'none';
+  try {
+    const store = loadStore();
+    const name  = store.trees[currentTreeId]?.name || 'tree';
+    const slug  = name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+    const cap   = await html2canvas(c, { backgroundColor:'#f2efe9', scale:1.5, useCORS:true, logging:false });
+    const { jsPDF } = window.jspdf;
+    const iw = cap.width, ih = cap.height;
+    const pdf = new jsPDF({ orientation: iw > ih ? 'landscape' : 'portrait', unit:'px', format:[iw,ih] });
+    pdf.addImage(cap.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, iw, ih);
+    pdf.save(slug + '-' + new Date().toISOString().slice(0,10) + '.pdf');
+  } finally { c.style.transform = savedT; }
+}
+
 // ════════════════════════════════════════════════
 // TREE HELPERS
 // ════════════════════════════════════════════════
 function findNode(id, n=tree) {
-  if (n.id===id) return n;
-  for (const c of (n.children||[])) { const f=findNode(id,c); if(f) return f; }
+  if (!n) return null;
+  if (n.id === id) return n;
+  for (const c of (n.children||[])) { const f = findNode(id,c); if (f) return f; }
   return null;
 }
 function findParent(id, n=tree, parent=null) {
-  if (n.id===id) return parent;
-  for (const c of (n.children||[])) { const p=findParent(id,c,n); if(p!==undefined) return p; }
+  if (!n) return undefined;
+  if (n.id === id) return parent;
+  for (const c of (n.children||[])) { const p = findParent(id,c,n); if (p !== undefined) return p; }
   return undefined;
 }
-
 function buildColorMap(n, inherited='#1c2b3a', map={}) {
   map[n.id] = n.color || inherited;
   for (const c of (n.children||[])) buildColorMap(c, n.color||inherited, map);
   return map;
 }
-
 function toggle(id) {
   const n = findNode(id);
   if (!n || !n.children?.length) return;
@@ -592,9 +1180,8 @@ function toggle(id) {
   save(); render();
   if (n.open) autoPanRight(id);
 }
-
 function autoPanRight(id) {
-  setTimeout(()=>{
+  setTimeout(() => {
     const el = document.querySelector(`.node[data-id="${id}"]`);
     if (!el) return;
     const nx2 = parseFloat(el.style.left)*zoom + pan.x + NW*zoom;
@@ -602,18 +1189,18 @@ function autoPanRight(id) {
       animateTo(pan.x-(nx2-window.innerWidth*0.72), pan.y, zoom);
   }, 40);
 }
-
 function setDepth(d) {
+  if (!tree) return;
   clearSearch();
   walkDepth(tree, d, 0);
-  ['btn-l1','btn-l2','btn-all'].forEach(id=>document.getElementById(id).classList.remove('on'));
-  if (d===1)  document.getElementById('btn-l1').classList.add('on');
-  if (d===2)  document.getElementById('btn-l2').classList.add('on');
-  if (d===99) document.getElementById('btn-all').classList.add('on');
+  ['btn-l1','btn-l2','btn-all'].forEach(id => document.getElementById(id)?.classList.remove('on'));
+  if (d===1)  document.getElementById('btn-l1')?.classList.add('on');
+  if (d===2)  document.getElementById('btn-l2')?.classList.add('on');
+  if (d===99) document.getElementById('btn-all')?.classList.add('on');
   save(); render(); fitView();
 }
 function walkDepth(n, max, cur) {
-  n.open = cur<max && !!(n.children?.length);
+  n.open = cur < max && !!(n.children?.length);
   for (const c of (n.children||[])) walkDepth(c, max, cur+1);
 }
 
@@ -624,32 +1211,30 @@ function onSearch(val) {
   const term = val.trim().toLowerCase();
   document.getElementById('srch-clear').style.display = term ? 'block' : 'none';
   if (!term) { clearSearch(); return; }
-  if (!searchActive) {
-    savedOpenState = captureOpen(tree);
-    expandAll(tree);
-    searchActive = true;
-  }
+  if (!searchActive) { savedOpenState = captureOpen(tree); expandAll(tree); searchActive = true; }
   render(term);
 }
 function clearSearch() {
-  document.getElementById('search-input').value = '';
-  document.getElementById('srch-clear').style.display = 'none';
-  if (searchActive && savedOpenState) { restoreOpen(tree, savedOpenState); savedOpenState=null; }
+  const inp = document.getElementById('search-input');
+  if (inp) inp.value = '';
+  const clr = document.getElementById('srch-clear');
+  if (clr) clr.style.display = 'none';
+  if (searchActive && savedOpenState) { restoreOpen(tree, savedOpenState); savedOpenState = null; }
   searchActive = false;
-  ['btn-l1','btn-l2','btn-all'].forEach(id=>document.getElementById(id).classList.remove('on'));
+  ['btn-l1','btn-l2','btn-all'].forEach(id => document.getElementById(id)?.classList.remove('on'));
   render();
 }
 function captureOpen(n) {
-  const s={id:n.id,open:n.open,ch:{}};
-  for (const c of (n.children||[])) s.ch[c.id]=captureOpen(c);
+  const s = {id:n.id, open:n.open, ch:{}};
+  for (const c of (n.children||[])) s.ch[c.id] = captureOpen(c);
   return s;
 }
-function restoreOpen(n,s) {
-  if(s&&s.id===n.id) n.open=s.open;
-  for(const c of (n.children||[])) if(s?.ch?.[c.id]) restoreOpen(c,s.ch[c.id]);
+function restoreOpen(n, s) {
+  if (s && s.id===n.id) n.open = s.open;
+  for (const c of (n.children||[])) if (s?.ch?.[c.id]) restoreOpen(c, s.ch[c.id]);
 }
 function expandAll(n) {
-  if(n.children?.length){n.open=true;n.children.forEach(expandAll);}
+  if (n.children?.length) { n.open = true; n.children.forEach(expandAll); }
 }
 
 // ════════════════════════════════════════════════
@@ -658,15 +1243,15 @@ function expandAll(n) {
 const NW=216, NH=44, HG=58, VG=9;
 
 function subH(n) {
-  if (!n.open||!n.children?.length) return NH+VG;
-  return Math.max(NH+VG, n.children.reduce((s,c)=>s+subH(c),0));
+  if (!n.open || !n.children?.length) return NH+VG;
+  return Math.max(NH+VG, n.children.reduce((s,c) => s+subH(c), 0));
 }
 function layout(n, x, midY, out, depth=0) {
-  out.push({n,x,y:midY-NH/2,depth});
-  if (n.open&&n.children?.length) {
-    const tot=n.children.reduce((s,c)=>s+subH(c),0);
-    let cy=midY-tot/2;
-    for(const c of n.children){const h=subH(c);layout(c,x+NW+HG,cy+h/2,out,depth+1);cy+=h;}
+  out.push({n, x, y:midY-NH/2, depth});
+  if (n.open && n.children?.length) {
+    const tot = n.children.reduce((s,c) => s+subH(c), 0);
+    let cy = midY - tot/2;
+    for (const c of n.children) { const h=subH(c); layout(c, x+NW+HG, cy+h/2, out, depth+1); cy+=h; }
   }
 }
 
@@ -674,99 +1259,95 @@ function layout(n, x, midY, out, depth=0) {
 // RENDER
 // ════════════════════════════════════════════════
 function render(searchTerm='') {
-  const colors  = buildColorMap(tree);
-  const canvas  = document.getElementById('canvas');
-  const svg     = document.getElementById('svg-layer');
-  const totalH  = subH(tree);
-  const pos     = [];
+  if (!tree) return;
+  const colors = buildColorMap(tree);
+  const canvas = document.getElementById('canvas');
+  const svg    = document.getElementById('svg-layer');
+  const totalH = subH(tree);
+  const pos    = [];
   layout(tree, 0, totalH/2+20, pos);
 
-  const W = pos.reduce((m,p)=>Math.max(m,p.x+NW),0)+150;
-  const H = pos.reduce((m,p)=>Math.max(m,p.y+NH),0)+90;
-  canvas.style.width=W+'px'; canvas.style.height=H+'px';
-  svg.setAttribute('width',W); svg.setAttribute('height',H);
+  const W = pos.reduce((m,p) => Math.max(m, p.x+NW), 0) + 150;
+  const H = pos.reduce((m,p) => Math.max(m, p.y+NH), 0) + 90;
+  canvas.style.width = W+'px'; canvas.style.height = H+'px';
+  svg.setAttribute('width', W); svg.setAttribute('height', H);
 
-  canvas.querySelectorAll('.node').forEach(e=>e.remove());
+  canvas.querySelectorAll('.node').forEach(e => e.remove());
 
   // SVG edges
-  let paths='';
-  for(const {n,x,y} of pos){
-    if(!n.open||!n.children?.length) continue;
+  let paths = '';
+  for (const {n,x,y} of pos) {
+    if (!n.open || !n.children?.length) continue;
     const px=x+NW, py=y+NH/2;
-    for(const child of n.children){
-      const cp=pos.find(p=>p.n===child); if(!cp) continue;
+    for (const child of n.children) {
+      const cp = pos.find(p => p.n===child); if (!cp) continue;
       const cx=cp.x, cy=cp.y+NH/2;
-      const col=colors[child.id]||'#888';
-      const mx=px+HG*.48;
-      paths+=`<path d="M${px},${py} C${mx},${py} ${mx},${cy} ${cx},${cy}"
-        fill="none" stroke="${col}" stroke-width="1.5" opacity="0.22"/>`;
+      const col = colors[child.id]||'#888';
+      const mx  = px+HG*.48;
+      paths += `<path d="M${px},${py} C${mx},${py} ${mx},${cy} ${cx},${cy}" fill="none" stroke="${col}" stroke-width="1.5" opacity="0.22"/>`;
     }
   }
-  svg.innerHTML=paths;
+  svg.innerHTML = paths;
 
   // Match ids for search
-  const matchIds=new Set();
-  if(searchTerm) for(const {n} of pos) if(n.label.toLowerCase().includes(searchTerm)) matchIds.add(n.id);
+  const matchIds = new Set();
+  if (searchTerm) for (const {n} of pos) if (n.label.toLowerCase().includes(searchTerm)) matchIds.add(n.id);
 
   // Nodes
-  for(const {n,x,y,depth} of pos){
-    const col     = colors[n.id]||'#4a6070';
+  for (const {n,x,y,depth} of pos) {
+    const col     = colors[n.id] || '#4a6070';
     const hasKids = !!(n.children?.length);
     const isRoot  = depth===0;
     const isL1    = depth===1;
 
-    const el=document.createElement('div');
-    el.className='node'+(hasKids?'':' leaf');
-    el.dataset.id=n.id;
-    el.style.cssText=`left:${x}px;top:${y}px;width:${NW}px;height:${NH}px;`;
+    const el = document.createElement('div');
+    el.className = 'node' + (hasKids ? '' : ' leaf');
+    el.dataset.id = n.id;
+    el.style.cssText = `left:${x}px;top:${y}px;width:${NW}px;height:${NH}px;`;
 
-    if(isRoot||isL1){
-      el.style.background=col;
-      el.style.boxShadow=`0 2px 14px ${col}38`;
-    } else if(depth===2){
-      el.style.background='#fff';
-      el.style.borderLeft=`4px solid ${col}`;
-      el.style.border=`1px solid #e2ddd6`;
-      el.style.borderLeft=`4px solid ${col}`;
-      el.style.boxShadow='0 1px 6px rgba(28,43,58,.07)';
+    if (isRoot||isL1) {
+      el.style.background  = col;
+      el.style.boxShadow   = `0 2px 14px ${col}38`;
+    } else if (depth===2) {
+      el.style.background  = '#fff';
+      el.style.border      = `1px solid #e2ddd6`;
+      el.style.borderLeft  = `4px solid ${col}`;
+      el.style.boxShadow   = '0 1px 6px rgba(28,43,58,.07)';
     } else {
-      el.style.background='var(--surface)';
-      el.style.border=`1px solid #e6e1d8`;
-      el.style.borderLeft=`3px solid ${col}`;
+      el.style.background  = 'var(--surface)';
+      el.style.border      = `1px solid #e6e1d8`;
+      el.style.borderLeft  = `3px solid ${col}`;
     }
 
-    if(searchTerm){
-      if(matchIds.has(n.id)) el.classList.add('highlighted');
+    if (searchTerm) {
+      if (matchIds.has(n.id)) el.classList.add('highlighted');
       else el.classList.add('dimmed');
     }
 
-    const txtCol=(isRoot||isL1)?'#fff':depth===2?'#1c2b3a':'#3a4f62';
-    const txtSz =isRoot?'13.5px':isL1?'12.5px':depth===2?'11.5px':'11px';
-    const badge =(!n.open&&hasKids)?`<span class="node-count" style="color:${txtCol}">${n.children.length}</span>`:'';
-    const chevron=hasKids?`<span class="node-chevron${n.open?' open':''}" style="color:${txtCol}">▶</span>`:'';
+    const txtCol = (isRoot||isL1) ? '#fff' : depth===2 ? '#1c2b3a' : '#3a4f62';
+    const txtSz  = isRoot ? '13.5px' : isL1 ? '12.5px' : depth===2 ? '11.5px' : '11px';
+    const badge  = (!n.open && hasKids) ? `<span class="node-count" style="color:${txtCol}">${n.children.length}</span>` : '';
+    const chevron = hasKids ? `<span class="node-chevron${n.open?' open':''}">▶</span>` : '';
 
-    el.innerHTML=`<div class="node-body">
+    el.innerHTML = `<div class="node-body">
       <span class="node-lbl" style="color:${txtCol};font-size:${txtSz}">${n.label}</span>
       ${badge}${chevron}
     </div>`;
 
-    // Single click (with dblclick guard): toggle children
-    // Double-click: rename (works on ALL nodes including leaves)
-    let clickTimer=null;
-    if(hasKids){
-      el.addEventListener('click', e=>{
-        if(e.defaultPrevented) return;
+    let clickTimer = null;
+    if (hasKids) {
+      el.addEventListener('click', e => {
+        if (e.defaultPrevented) return;
         clearTimeout(clickTimer);
-        clickTimer=setTimeout(()=>toggle(n.id), 220);
+        clickTimer = setTimeout(() => toggle(n.id), 220);
       });
     }
-    el.addEventListener('dblclick', e=>{
+    el.addEventListener('dblclick', e => {
       e.preventDefault();
       clearTimeout(clickTimer);
       startRename(n.id);
     });
-    // Right-click: context menu
-    el.addEventListener('contextmenu', e=>{ e.preventDefault(); showCtxMenu(n.id, e.clientX, e.clientY, depth); });
+    el.addEventListener('contextmenu', e => { e.preventDefault(); showCtxMenu(n.id, e.clientX, e.clientY, depth); });
 
     canvas.appendChild(el);
   }
@@ -776,77 +1357,58 @@ function render(searchTerm='') {
 // CONTEXT MENU
 // ════════════════════════════════════════════════
 function showCtxMenu(id, x, y, depth=99) {
-  ctxTargetId=id;
+  ctxTargetId = id;
   const isCustom = id.startsWith('u_');
   const isL1node = depth===1;
   document.getElementById('ctx-delete').classList.toggle('disabled', !isCustom);
   document.getElementById('ctx-color').style.display = isL1node ? 'flex' : 'none';
-  const menu=document.getElementById('ctx-menu');
-  menu.style.display='block';
-  menu.style.left=x+'px'; menu.style.top=y+'px';
-  requestAnimationFrame(()=>{
-    const r=menu.getBoundingClientRect();
-    if(r.right>window.innerWidth-8) menu.style.left=(x-r.width)+'px';
-    if(r.bottom>window.innerHeight-8) menu.style.top=(y-r.height)+'px';
+  const menu = document.getElementById('ctx-menu');
+  menu.style.display = 'block';
+  menu.style.left = x+'px'; menu.style.top = y+'px';
+  requestAnimationFrame(() => {
+    const r = menu.getBoundingClientRect();
+    if (r.right  > window.innerWidth-8)  menu.style.left = (x-r.width)+'px';
+    if (r.bottom > window.innerHeight-8) menu.style.top  = (y-r.height)+'px';
   });
 }
-function hideCtxMenu(){ document.getElementById('ctx-menu').style.display='none'; ctxTargetId=null; }
+function hideCtxMenu() { document.getElementById('ctx-menu').style.display='none'; ctxTargetId=null; }
 
-function ctxDoAdd(){
-  const id=ctxTargetId; hideCtxMenu();
-  openModal('add', id);
-}
-function ctxDoRename(){
-  const id=ctxTargetId; hideCtxMenu();
-  startRename(id);
-}
-function ctxDoColor(){
+function ctxDoAdd() { const id=ctxTargetId; hideCtxMenu(); openModal('add', id); }
+function ctxDoRename() { const id=ctxTargetId; hideCtxMenu(); startRename(id); }
+function ctxDoColor() {
   const id=ctxTargetId; hideCtxMenu();
   const n=findNode(id); if(!n) return;
   const picker=document.createElement('input');
-  picker.type='color';
-  picker.value=n.color||'#166638';
+  picker.type='color'; picker.value=n.color||'#166638';
   picker.style.cssText='position:fixed;opacity:0;pointer-events:none;top:0;left:0;';
   document.body.appendChild(picker);
-  picker.addEventListener('input', e=>{ n.color=e.target.value; render(); });
-  picker.addEventListener('change', e=>{ n.color=e.target.value; save(); render(); picker.remove(); });
-  picker.addEventListener('blur', ()=>picker.remove());
+  picker.addEventListener('input',  e => { n.color=e.target.value; render(); });
+  picker.addEventListener('change', e => { n.color=e.target.value; save(); render(); picker.remove(); });
+  picker.addEventListener('blur', () => picker.remove());
   picker.click();
 }
-function ctxDoDelete(){
+function ctxDoDelete() {
   const id=ctxTargetId; hideCtxMenu();
-  if(!id.startsWith('u_')) return;
+  if (!id.startsWith('u_')) return;
   const n=findNode(id); if(!n) return;
-  if(!confirm(`Delete "${n.label}"?`)) return;
+  if (!confirm('Delete "' + n.label + '"?')) return;
   const parent=findParent(id);
-  if(parent) parent.children=parent.children.filter(c=>c.id!==id);
+  if (parent) parent.children=parent.children.filter(c=>c.id!==id);
   save(); render();
 }
-
-document.addEventListener('click', e=>{
-  if(!e.target.closest('#ctx-menu')) hideCtxMenu();
-});
-document.addEventListener('keydown', e=>{
-  if(e.key==='Escape'){ hideCtxMenu(); closeModal(); }
-  if((e.metaKey||e.ctrlKey)&&e.key==='f'){
-    e.preventDefault();
-    document.getElementById('search-input').focus();
-    document.getElementById('search-input').select();
-  }
-});
 
 // ════════════════════════════════════════════════
 // ADD / RENAME MODAL
 // ════════════════════════════════════════════════
-let modalTargetId=null;
-function openModal(mode, id){
+let modalTargetId = null;
+function openModal(mode, id) {
   modalMode=mode; modalTargetId=id;
   const n=findNode(id);
   const overlay=document.getElementById('modal-overlay');
   const inp=document.getElementById('modal-input');
-  if(mode==='add'){
+  if (mode==='add') {
     document.getElementById('modal-title').textContent='Add child node';
-    document.getElementById('modal-sub').innerHTML=`Under: <em>${n?.label||id}</em>`;
+    document.getElementById('modal-sub').innerHTML='Under: <em>' + escHtml(n?.label||id) + '</em>';
     document.getElementById('modal-ok').textContent='Add';
     inp.value=''; inp.placeholder='Node label…';
   } else {
@@ -858,18 +1420,18 @@ function openModal(mode, id){
   overlay.style.display='flex';
   setTimeout(()=>{ inp.focus(); inp.select(); }, 60);
 }
-function closeModal(e){
-  if(e&&e.target!==document.getElementById('modal-overlay')) return;
+function closeModal(e) {
+  if (e && e.target!==document.getElementById('modal-overlay')) return;
   document.getElementById('modal-overlay').style.display='none';
   modalTargetId=null;
 }
-function confirmModal(){
+function confirmModal() {
   const v=document.getElementById('modal-input').value.trim();
-  if(!v){ document.getElementById('modal-input').focus(); return; }
-  if(modalMode==='add'){
+  if (!v) { document.getElementById('modal-input').focus(); return; }
+  if (modalMode==='add') {
     const p=findNode(modalTargetId); if(!p) return;
-    if(!p.children) p.children=[];
-    p.children.push({id:'u_'+Date.now(),label:v,open:false});
+    if (!p.children) p.children=[];
+    p.children.push({id:'u_'+Date.now(), label:v, open:false});
     p.open=true;
   } else {
     const n=findNode(modalTargetId); if(n) n.label=v;
@@ -878,16 +1440,16 @@ function confirmModal(){
   document.getElementById('modal-overlay').style.display='none';
   modalTargetId=null;
 }
-document.getElementById('modal-input').addEventListener('keydown',e=>{
-  if(e.key==='Enter'){ e.preventDefault(); confirmModal(); }
-  if(e.key==='Escape') closeModal();
+document.getElementById('modal-input').addEventListener('keydown', e => {
+  if (e.key==='Enter')  { e.preventDefault(); confirmModal(); }
+  if (e.key==='Escape') closeModal();
   e.stopPropagation();
 });
 
 // ════════════════════════════════════════════════
 // INLINE RENAME (double-click)
 // ════════════════════════════════════════════════
-function startRename(id){
+function startRename(id) {
   const el=document.querySelector(`.node[data-id="${id}"]`); if(!el) return;
   const n=findNode(id); if(!n) return;
   const rect=el.getBoundingClientRect();
@@ -898,62 +1460,61 @@ function startRename(id){
   document.body.appendChild(inp);
   inp.focus(); inp.select();
   let committed=false;
-  function commit(){
-    if(committed) return; committed=true;
+  function commit() {
+    if (committed) return; committed=true;
     const v=inp.value.trim();
-    if(v&&v!==n.label){ n.label=v; save(); render(); }
+    if (v && v!==n.label) { n.label=v; save(); render(); }
     inp.remove();
   }
-  inp.addEventListener('keydown',e=>{
-    if(e.key==='Enter') commit();
-    if(e.key==='Escape'){ inp.remove(); }
+  inp.addEventListener('keydown', e => {
+    if (e.key==='Enter')  commit();
+    if (e.key==='Escape') { committed=true; inp.remove(); }
     e.stopPropagation();
   });
   inp.addEventListener('blur', commit);
 }
 
 // ════════════════════════════════════════════════
-// PAN & ZOOM (trackpad-optimised)
+// PAN & ZOOM  (trackpad-optimised)
 // ════════════════════════════════════════════════
-const vp=document.getElementById('viewport');
+const vp = document.getElementById('viewport');
 
-function applyTransform(anim=false){
-  const c=document.getElementById('canvas');
-  if(anim){ c.style.transition='transform .3s cubic-bezier(.25,.8,.25,1)'; setTimeout(()=>c.style.transition='',320); }
-  c.style.transform=`translate(${pan.x}px,${pan.y}px) scale(${zoom})`;
+function applyTransform(anim=false) {
+  const c = document.getElementById('canvas');
+  if (anim) { c.style.transition='transform .3s cubic-bezier(.25,.8,.25,1)'; setTimeout(()=>c.style.transition='',320); }
+  c.style.transform = `translate(${pan.x}px,${pan.y}px) scale(${zoom})`;
 }
-function animateTo(tx,ty,tz){
-  pan.x=tx; pan.y=ty; zoom=tz; applyTransform(true);
-}
+function animateTo(tx,ty,tz) { pan.x=tx; pan.y=ty; zoom=tz; applyTransform(true); }
 
-vp.addEventListener('wheel',e=>{
+vp.addEventListener('wheel', e => {
   e.preventDefault();
-  if(e.ctrlKey){
-    const f=e.deltaY<0?1.06:.944;
-    const nz=Math.min(3,Math.max(.15,zoom*f));
-    const r=vp.getBoundingClientRect();
-    const mx=e.clientX-r.left, my=e.clientY-r.top;
-    pan.x=mx-(mx-pan.x)*(nz/zoom);
-    pan.y=my-(my-pan.y)*(nz/zoom);
-    zoom=nz;
+  if (e.ctrlKey) {
+    const f  = e.deltaY < 0 ? 1.06 : .944;
+    const nz = Math.min(3, Math.max(.15, zoom*f));
+    const r  = vp.getBoundingClientRect();
+    const mx = e.clientX-r.left, my = e.clientY-r.top;
+    pan.x = mx-(mx-pan.x)*(nz/zoom);
+    pan.y = my-(my-pan.y)*(nz/zoom);
+    zoom  = nz;
   } else {
-    pan.x-=e.deltaX; pan.y-=e.deltaY;
+    pan.x -= e.deltaX; pan.y -= e.deltaY;
   }
   applyTransform();
-},{passive:false});
+}, {passive:false});
 
-let drag=false,dO={x:0,y:0},pO={x:0,y:0};
-vp.addEventListener('mousedown',e=>{
-  if(e.target.closest('.node')||e.target.closest('#ctx-menu')||e.target.closest('#modal-overlay')||e.target.closest('.rename-input')) return;
+let drag=false, dO={x:0,y:0}, pO={x:0,y:0};
+vp.addEventListener('mousedown', e => {
+  if (e.target.closest('.node')||e.target.closest('#ctx-menu')||e.target.closest('#modal-overlay')||e.target.closest('.rename-input')) return;
   drag=true; dO={x:e.clientX,y:e.clientY}; pO={...pan};
   vp.style.cursor='grabbing';
 });
-window.addEventListener('mousemove',e=>{ if(!drag) return; pan.x=pO.x+(e.clientX-dO.x); pan.y=pO.y+(e.clientY-dO.y); applyTransform(); });
-window.addEventListener('mouseup',()=>{ drag=false; vp.style.cursor='default'; });
+window.addEventListener('mousemove', e => { if(!drag) return; pan.x=pO.x+(e.clientX-dO.x); pan.y=pO.y+(e.clientY-dO.y); applyTransform(); });
+window.addEventListener('mouseup',   () => { drag=false; vp.style.cursor='default'; });
 
-function fitView(){
-  const pos=[]; layout(tree,0,subH(tree)/2+20,pos);
-  if(!pos.length) return;
+function fitView() {
+  if (!tree) return;
+  const pos=[]; layout(tree, 0, subH(tree)/2+20, pos);
+  if (!pos.length) return;
   const pad=70;
   const x0=pos.reduce((m,p)=>Math.min(m,p.x),Infinity)-pad;
   const y0=pos.reduce((m,p)=>Math.min(m,p.y),Infinity)-pad;
@@ -965,10 +1526,30 @@ function fitView(){
 }
 
 // ════════════════════════════════════════════════
+// GLOBAL EVENT HANDLERS
+// ════════════════════════════════════════════════
+document.addEventListener('click', e => {
+  if (!e.target.closest('#ctx-menu'))                          hideCtxMenu();
+  if (!e.target.closest('#card-menu') && !e.target.closest('.tree-card-btn')) hideCardMenu();
+  if (!e.target.closest('#export-wrap'))                       hideExportMenu();
+});
+document.addEventListener('keydown', e => {
+  if (e.key==='Escape') { hideCtxMenu(); closeModal(); hideCardMenu(); hideExportMenu(); hideNewTreeModal(); }
+  if ((e.metaKey||e.ctrlKey) && e.key==='f') {
+    e.preventDefault();
+    const inp = document.getElementById('search-input');
+    if (inp && document.getElementById('editor-view').style.display!=='none') { inp.focus(); inp.select(); }
+  }
+});
+
+// ════════════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════════════
-render();
-setDepth(1);
+initRouter();
 </script>
+
+<!-- CDN export libs — loaded async, fail gracefully if offline -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
 </body>
 </html>
