@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
   <title>IssueTree</title>
-  <!-- Phosphor-style tree favicon (evergreen silhouette) -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath fill='%232e7d32' d='M128,20 L196,96 H168 L212,168 H148 V216 H108 V168 H44 L88,96 H60 Z'/%3E%3C/svg%3E"/>
+  <!-- Phosphor "tree structure" favicon — black bg + forest green icon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Crect width='256' height='256' rx='40' fill='%23000000'/%3E%3Crect x='56' y='24' width='48' height='48' rx='8' fill='%2352b788' opacity='0.25'/%3E%3Crect x='168' y='96' width='48' height='48' rx='8' fill='%2352b788' opacity='0.25'/%3E%3Crect x='168' y='184' width='48' height='48' rx='8' fill='%2352b788' opacity='0.25'/%3E%3Crect x='56' y='24' width='48' height='48' rx='8' fill='none' stroke='%2352b788' stroke-linecap='round' stroke-linejoin='round' stroke-width='16'/%3E%3Crect x='168' y='96' width='48' height='48' rx='8' fill='none' stroke='%2352b788' stroke-linecap='round' stroke-linejoin='round' stroke-width='16'/%3E%3Crect x='168' y='184' width='48' height='48' rx='8' fill='none' stroke='%2352b788' stroke-linecap='round' stroke-linejoin='round' stroke-width='16'/%3E%3Cline x1='80' y1='120' x2='168' y2='120' fill='none' stroke='%2352b788' stroke-linecap='round' stroke-linejoin='round' stroke-width='16'/%3E%3Cpath d='M80,72V192a16,16,0,0,0,16,16h72' fill='none' stroke='%2352b788' stroke-linecap='round' stroke-linejoin='round' stroke-width='16'/%3E%3C/svg%3E"/>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <!-- Base fonts always loaded -->
@@ -19,8 +20,8 @@
       --font-body: 'Plus Jakarta Sans', sans-serif;
       --bg:        #ffffff;
       --dot:       #e0dcd8;
-      --navy:      #1b4332;
-      --green:     #1b5e20;
+      --navy:      #28a85f;
+      --green:     #28a85f;
       --teal:      #006064;
       --rust:      #bf360c;
       --purple:    #4a148c;
@@ -49,8 +50,8 @@
     html[data-theme="dark"] {
       --bg:        #141218;
       --dot:       #2b2930;
-      --navy:      #1b4332;
-      --green:     #1b5e20;
+      --navy:      #28a85f;
+      --green:     #28a85f;
       --teal:      #006064;
       --rust:      #bf360c;
       --purple:    #4a148c;
@@ -130,7 +131,7 @@
       box-shadow: var(--shadow-sm);
       transition: background .12s, transform .1s;
     }
-    #btn-new-tree:hover { background: #2d6a4f; transform: translateY(-1px); }
+    #btn-new-tree:hover { background: #1e8a4a; transform: translateY(-1px); }
 
     #home-grid {
       display: grid;
@@ -138,7 +139,7 @@
       gap: 14px;
     }
     .tree-card {
-      background: rgba(250,249,246,.96);
+      background: var(--glass-bg);
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 18px 16px 14px;
@@ -147,7 +148,6 @@
       box-shadow: var(--shadow-sm);
     }
     .tree-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-    /* Color accent stripe on tree cards */
     .tree-card { overflow: hidden; }
     .tree-card-accent {
       position: absolute; top: 0; left: 0; right: 0; height: 3px;
@@ -185,12 +185,6 @@
       padding: 20px 20px 18px;
       position: relative; overflow: hidden;
     }
-    .expl-card::before {
-      content: '';
-      position: absolute; top: 0; left: 0; right: 0; height: 3px;
-      background: var(--navy); border-radius: 14px 14px 0 0;
-      opacity: .35;
-    }
     .expl-card-icon {
       font-size: 20px; margin-bottom: 10px; display: block; line-height: 1;
     }
@@ -205,26 +199,25 @@
     }
     .expl-intro {
       grid-column: 1 / -1;
-      background: linear-gradient(135deg, var(--navy) 0%, #2d6a4f 100%);
+      background: linear-gradient(135deg, #000000 0%, #28a85f 100%);
       border: none; border-radius: 14px;
-      padding: 24px 28px;
-      color: #fff;
+      padding: 28px 32px;
     }
     .expl-intro::before { display: none; }
     .expl-intro-eyebrow {
       font-size: 10px; font-weight: 700; letter-spacing: .8px;
-      text-transform: uppercase; color: rgba(255,255,255,.55);
-      margin-bottom: 8px;
+      text-transform: uppercase; color: rgba(255,255,255,.6);
+      margin-bottom: 10px;
     }
     .expl-intro-headline {
       font-family: var(--font-head);
-      font-size: 17px; color: #fff;
-      line-height: 1.4; margin-bottom: 10px;
+      font-size: 20px; color: #fff;
+      line-height: 1.35; margin-bottom: 12px;
       max-width: 680px;
     }
     .expl-intro-body {
-      font-size: 12px; color: rgba(255,255,255,.78);
-      line-height: 1.7; max-width: 720px;
+      font-size: 12.5px; color: rgba(255,255,255,.75);
+      line-height: 1.75; max-width: 720px;
     }
     @media (max-width: 660px) {
       #home-explainer { grid-template-columns: 1fr; }
@@ -374,7 +367,7 @@
     }
     .tbtn:hover  { background: var(--border); color: var(--ink); }
     .tbtn.on     { background: var(--navy); color: #fff; }
-    .tbtn.on:hover { background: #2d6a4f; }
+    .tbtn.on:hover { background: #1e8a4a; }
     .tbtn.danger { color: #b03020; }
     .tbtn.danger:hover { background: #fdecea; }
 
@@ -672,7 +665,7 @@
     .mbtn.cancel { background: var(--bg); color: var(--mid); }
     .mbtn.cancel:hover { background: var(--border); }
     .mbtn.ok { background: var(--navy); color: #fff; }
-    .mbtn.ok:hover { background: #2d6a4f; }
+    .mbtn.ok:hover { background: #1e8a4a; }
 
     /* Inline rename input */
     .rename-input {
@@ -748,6 +741,118 @@
     .note-btn.save:hover { background: #6d28d9; }
     .note-btn.remove { background: transparent; color: rgba(255,100,80,.7); margin-right: auto; font-size: 10.5px; }
     .note-btn.remove:hover { color: #ff5f57; }
+
+    /* ══════════════════════════════════════
+       MOBILE / RESPONSIVE
+    ══════════════════════════════════════ */
+
+    /* ── Toolbar: horizontal scroll on narrow screens ── */
+    @media (max-width: 640px) {
+      #toolbar {
+        left: 16px;
+        right: 16px;
+        transform: none;
+        max-width: calc(100vw - 32px);
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        border-radius: 12px;
+        padding: 6px 10px;
+        gap: 4px;
+      }
+      #toolbar::-webkit-scrollbar { display: none; }
+
+      /* Slightly tighter toolbar buttons on mobile */
+      .tbtn { padding: 5px 7px; font-size: 11px; }
+      #search-input { width: 100px; }
+      #search-input:focus { width: 120px; }
+
+      /* Minimap hidden on mobile — not essential, blocks touch targets */
+      #minimap { display: none; }
+
+      /* Help panel: full-width on very small screens */
+      #help-panel {
+        width: calc(100vw - 32px);
+        right: 16px;
+        top: 60px;
+        max-height: calc(100vh - 76px);
+      }
+
+      /* Focus breadcrumb: narrower */
+      #focus-crumb {
+        max-width: calc(100vw - 80px);
+        font-size: 10px;
+      }
+
+      /* Note panel: full-width on mobile */
+      #note-panel {
+        right: 12px;
+        left: 12px;
+        width: auto;
+        top: 70px;
+        min-width: 0;
+      }
+    }
+
+    /* ── Home screen grid: tighter columns on very small screens ── */
+    @media (max-width: 480px) {
+      #home-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      }
+      #home-inner {
+        padding: 32px 16px 60px;
+      }
+      #home-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+      #home-header > div:last-child {
+        align-self: flex-start;
+      }
+    }
+
+    /* ── Modals: constrain height and add scroll on small screens ── */
+    @media (max-width: 640px) {
+      #new-tree-overlay,
+      #retheme-overlay,
+      #modal-overlay {
+        align-items: flex-end;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+      #new-tree-modal {
+        width: 100%;
+        max-width: 100%;
+        border-radius: 18px 18px 0 0;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 20px 18px 28px;
+      }
+      #retheme-overlay > div {
+        width: 100%;
+        max-width: 100%;
+        border-radius: 18px 18px 0 0;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+      #modal {
+        width: calc(100vw - 32px);
+        min-width: 0;
+        border-radius: 14px;
+      }
+    }
+
+    /* ── Safe area: bottom-fixed elements ── */
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+      #toolbar {
+        /* Toolbar is at top, no bottom safe area needed */
+      }
+      /* If any element is pinned to bottom, add safe-area inset */
+      #minimap {
+        bottom: calc(62px + env(safe-area-inset-bottom, 0px));
+      }
+    }
   </style>
 </head>
 <body>
@@ -763,10 +868,10 @@
         <span id="home-tagline">Structured problem-solving &nbsp;·&nbsp; <span title="All trees are saved in your browser's local storage" style="color:var(--teal);cursor:help">💾 Saved locally</span></span>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
-        <button class="tbtn" onclick="exportAllTrees()" title="Backup all trees to JSON" style="font-size:11.5px;padding:6px 12px;border:1.5px solid var(--border);border-radius:8px">⬇ Backup</button>
+        <button class="tbtn" onclick="exportAllTrees()" title="Backup all trees to JSON" style="font-size:13px;padding:10px 20px;border:1.5px solid var(--border);border-radius:10px">⬇ Backup</button>
         <label title="Restore trees from backup" style="cursor:pointer">
           <input type="file" id="import-all-file" accept=".json" style="display:none" onchange="importAllTrees(this)"/>
-          <span class="tbtn" style="font-size:11.5px;padding:6px 12px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer">⬆ Restore</span>
+          <span class="tbtn" style="font-size:13px;padding:10px 20px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer">⬆ Restore</span>
         </label>
         <button id="btn-new-tree" onclick="showNewTreeModal()">+ New Tree</button>
       </div>
@@ -1062,9 +1167,9 @@
 // DEFAULT TREE DATA
 // ════════════════════════════════════════════════
 const DEFAULT = {
-  id:'root', label:'Telecom X — Performance Levers', open:true, color:'#1c2b3a',
+  id:'root', label:'Telecom X — Performance Levers', open:true, color:'#000000',
   children:[
-    { id:'pricing', label:'Pricing Levers', open:false, color:'#166638',
+    { id:'pricing', label:'Pricing Levers', open:false, color:'#28a85f',
       children:[
         { id:'pr-level', label:'Price Level', open:false, children:[
           {id:'pl1',label:'Base plan price points'},
@@ -1254,20 +1359,20 @@ const DEFAULT = {
 // ════════════════════════════════════════════════
 const TEMPLATES = {
   blank: {
-    id:'root', label:'New Issue Tree', open:true, color:'#1c2b3a', children:[]
+    id:'root', label:'New Issue Tree', open:true, color:'#000000', children:[]
   },
   mckinsey: {
-    id:'root', label:'Issue Tree', open:true, color:'#1c2b3a',
+    id:'root', label:'Issue Tree', open:true, color:'#000000',
     children:[
-      {id:'t1',label:'Issue 1',open:false,color:'#166638',children:[]},
+      {id:'t1',label:'Issue 1',open:false,color:'#28a85f',children:[]},
       {id:'t2',label:'Issue 2',open:false,color:'#0e4d6c',children:[]},
       {id:'t3',label:'Issue 3',open:false,color:'#7d3512',children:[]},
     ]
   },
   rca: {
-    id:'root', label:'Root Cause Analysis', open:true, color:'#1c2b3a',
+    id:'root', label:'Root Cause Analysis', open:true, color:'#000000',
     children:[
-      {id:'t1',label:'People',    open:false, color:'#166638', children:[]},
+      {id:'t1',label:'People',    open:false, color:'#28a85f', children:[]},
       {id:'t2',label:'Process',   open:false, color:'#0e4d6c', children:[]},
       {id:'t3',label:'Technology',open:false, color:'#7d3512', children:[]},
       {id:'t4',label:'External',  open:false, color:'#4a3580', children:[]},
@@ -1285,7 +1390,7 @@ TEMPLATES.telecom = DEFAULT;
 // Tones chosen from M3 tonal palette ranges (T10-T40) for accessibility.
 const COLOR_THEMES = {
   // ── Original 5 ──
-  classic: { name:'Classic',  root:'#1c2b3a', colors:['#166638','#0e4d6c','#7d3512','#4a3580'], dots:['#1c2b3a','#166638','#0e4d6c','#7d3512'] },
+  classic: { name:'Classic',  root:'#000000', colors:['#28a85f','#0e4d6c','#7d3512','#4a3580'], dots:['#000000','#28a85f','#0e4d6c','#7d3512'] },
   ocean:   { name:'Ocean',    root:'#0a3352', colors:['#0e6e9c','#1a8a7a','#2e4fa3','#4a8ab5'], dots:['#0a3352','#0e6e9c','#1a8a7a','#2e4fa3'] },
   sunset:  { name:'Sunset',   root:'#3d1a0f', colors:['#b84422','#d4782a','#a33050','#7a2d5e'], dots:['#3d1a0f','#b84422','#d4782a','#a33050'] },
   forest:  { name:'Forest',   root:'#1a3320', colors:['#2d6e3e','#5a8e3a','#1e6b55','#4a7a2a'], dots:['#1a3320','#2d6e3e','#5a8e3a','#1e6b55'] },
@@ -1467,7 +1572,7 @@ function renderHome() {
 
   trees.forEach(t => {
     const n   = countNodes(t.data);
-    const rootColor = t.data?.color || '#1c2b3a';
+    const rootColor = t.data?.color || '#000000';
     const div = document.createElement('div');
     div.className = 'tree-card';
     div.innerHTML = `
@@ -1812,7 +1917,7 @@ function findParent(id, n=tree, parent=null) {
   for (const c of (n.children||[])) { const p = findParent(id,c,n); if (p !== undefined) return p; }
   return undefined;
 }
-function buildColorMap(n, inherited='#1c2b3a', map={}) {
+function buildColorMap(n, inherited='#000000', map={}) {
   map[n.id] = n.color || inherited;
   for (const c of (n.children||[])) buildColorMap(c, n.color||inherited, map);
   return map;
@@ -2112,7 +2217,7 @@ function render(searchTerm='') {
     }
 
     const isDark  = isRoot || isL1;
-    const txtCol  = isDark ? '#fff' : depth===2 ? '#1c2b3a' : '#3a4f62';
+    const txtCol  = isDark ? '#fff' : depth===2 ? '#000000' : '#3a4f62';
     const txtSz   = isRoot ? '13.5px' : isL1 ? '12.5px' : depth===2 ? '11.5px' : '11px';
 
     // Menu button SVG (vertical 3-dots)
@@ -2175,6 +2280,44 @@ function render(searchTerm='') {
       e.preventDefault();
       openNote(n.id);
     });
+
+    // ── Long-press for context menu (touch) ──
+    (function() {
+      let lpTimer = null, lpStartX = 0, lpStartY = 0;
+      el.addEventListener('touchstart', e => {
+        if (e.target.closest('.node-menu-btn') || e.target.closest('.node-note-icon')) return;
+        const t = e.touches[0];
+        lpStartX = t.clientX; lpStartY = t.clientY;
+        lpTimer = setTimeout(() => {
+          lpTimer = null;
+          e.preventDefault();
+          showCtxMenu(n.id, lpStartX, lpStartY, depth);
+        }, 500);
+      }, {passive: true});
+      el.addEventListener('touchmove', e => {
+        if (lpTimer === null) return;
+        const t = e.touches[0];
+        if (Math.abs(t.clientX - lpStartX) > 10 || Math.abs(t.clientY - lpStartY) > 10) {
+          clearTimeout(lpTimer); lpTimer = null;
+        }
+      }, {passive: true});
+      el.addEventListener('touchend', () => {
+        clearTimeout(lpTimer); lpTimer = null;
+      }, {passive: true});
+      el.addEventListener('touchcancel', () => {
+        clearTimeout(lpTimer); lpTimer = null;
+      }, {passive: true});
+    })();
+
+    // ── Touch drag-and-drop ──
+    el.addEventListener('touchstart', e => {
+      if (e.target.closest('.node-menu-btn') || e.target.closest('.node-note-icon')) return;
+      const t = e.touches[0];
+      dragState.pending = n.id;
+      dragState.startX = t.clientX;
+      dragState.startY = t.clientY;
+      dragState.depth  = depth;
+    }, {passive: true});
 
     // Apply kb focus ring
     if (n.id === kbFocusId) el.classList.add('kb-focus');
@@ -2249,7 +2392,7 @@ function ctxDoColor() {
   const id=ctxTargetId; hideCtxMenu();
   const n=findNode(id); if(!n) return;
   const picker=document.createElement('input');
-  picker.type='color'; picker.value=n.color||'#166638';
+  picker.type='color'; picker.value=n.color||'#28a85f';
   picker.style.cssText='position:fixed;opacity:0;pointer-events:none;top:0;left:0;';
   document.body.appendChild(picker);
   picker.addEventListener('input',  e => { n.color=e.target.value; render(); });
@@ -2612,9 +2755,9 @@ function isDescendant(ancestorId, checkId) {
     removeDropLine();
   }
 
-  window.addEventListener('mousemove', e => {
+  function handleDragMove(clientX, clientY) {
     if (!dragState.pending && !dragState.active) return;
-    const dx = e.clientX - dragState.startX, dy = e.clientY - dragState.startY;
+    const dx = clientX - dragState.startX, dy = clientY - dragState.startY;
 
     if (!dragState.active && dragState.pending) {
       if (Math.abs(dx)>5 || Math.abs(dy)>5) {
@@ -2628,12 +2771,12 @@ function isDescendant(ancestorId, checkId) {
 
     // Move ghost
     if (dragState.ghost) {
-      dragState.ghost.style.left = (e.clientX - NW/2) + 'px';
-      dragState.ghost.style.top  = (e.clientY - 20) + 'px';
+      dragState.ghost.style.left = (clientX - NW/2) + 'px';
+      dragState.ghost.style.top  = (clientY - 20) + 'px';
     }
 
     // Find drop target
-    const underEls = document.elementsFromPoint(e.clientX, e.clientY);
+    const underEls = document.elementsFromPoint(clientX, clientY);
     const targetEl  = underEls.find(el => el.classList.contains('node') && el.dataset.id && el.dataset.id !== dragState.pending);
     clearDropHighlight();
 
@@ -2642,15 +2785,13 @@ function isDescendant(ancestorId, checkId) {
     if (isDescendant(dragState.pending, tid)) { dragState.targetId=null; return; }
 
     const rect = targetEl.getBoundingClientRect();
-    const relY = (e.clientY - rect.top) / rect.height;
+    const relY = (clientY - rect.top) / rect.height;
     const dragParent = findParent(dragState.pending);
     const targetParent = findParent(tid);
 
-    // If same parent: reorder (show insert line)
     if (dragParent && targetParent && dragParent.id === targetParent.id) {
       if (relY < 0.5) {
         dragState.insertMode = 'before';
-        // Drop line above target
         if (!dropLineEl) { dropLineEl=document.createElement('div'); dropLineEl.className='drop-line'; document.getElementById('canvas').appendChild(dropLineEl); }
         dropLineEl.style.left  = (parseFloat(targetEl.style.left)-2) + 'px';
         dropLineEl.style.width = (NW+4) + 'px';
@@ -2667,9 +2808,9 @@ function isDescendant(ancestorId, checkId) {
       targetEl.classList.add('drop-over');
     }
     dragState.targetId = tid;
-  });
+  }
 
-  window.addEventListener('mouseup', e => {
+  function handleDragEnd(clientX, clientY) {
     if (!dragState.active) { dragState.pending=null; return; }
     const srcId = dragState.pending;
     const tgtId = dragState.targetId;
@@ -2681,29 +2822,25 @@ function isDescendant(ancestorId, checkId) {
 
     if (!srcId || !tgtId || !tree) return;
     const srcNode    = findNode(srcId); if (!srcNode) return;
-    const srcParent  = findParent(srcId); if (!srcParent) return; // can't move root
+    const srcParent  = findParent(srcId); if (!srcParent) return;
     const tgtNode    = findNode(tgtId); if (!tgtNode) return;
     const tgtParent  = findParent(tgtId);
 
     pushHistory();
 
-    // Remove from current parent
     srcParent.children = srcParent.children.filter(c=>c.id!==srcId);
 
     if (mode === 'append') {
-      // Add as last child of tgtNode
       if (!tgtNode.children) tgtNode.children = [];
       tgtNode.children.push(srcNode);
       tgtNode.open = true;
     } else if (mode === 'before' || mode === 'after') {
-      // Insert into tgtParent relative to tgtNode
       const sibs = tgtParent ? tgtParent.children : (tree.children||[]);
       const idx = sibs.findIndex(s=>s.id===tgtId);
       const insertIdx = mode==='after' ? idx+1 : idx;
       sibs.splice(insertIdx, 0, srcNode);
     }
 
-    // If node moved to L1 position, assign correct theme color for its new slot
     const newParentIsRoot = (mode === 'append' && tgtNode.id === tree?.id) ||
                             ((mode === 'before' || mode === 'after') && tgtParent?.id === tree?.id);
     if (newParentIsRoot && tree) {
@@ -2712,6 +2849,27 @@ function isDescendant(ancestorId, checkId) {
     }
 
     save(); render();
+  }
+
+  window.addEventListener('mousemove', e => { handleDragMove(e.clientX, e.clientY); });
+  window.addEventListener('mouseup',   e => { handleDragEnd(e.clientX, e.clientY); });
+
+  // Touch equivalents for drag-and-drop
+  window.addEventListener('touchmove', e => {
+    if (!dragState.pending && !dragState.active) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    handleDragMove(t.clientX, t.clientY);
+  }, {passive: false});
+  window.addEventListener('touchend', e => {
+    if (!dragState.pending && !dragState.active) return;
+    const t = e.changedTouches[0];
+    handleDragEnd(t.clientX, t.clientY);
+  }, {passive: false});
+  window.addEventListener('touchcancel', () => {
+    removeGhost(); clearDropHighlight();
+    document.body.style.userSelect = '';
+    dragState = { pending:null, active:false, ghost:null, targetId:null, insertMode:null, startX:0, startY:0 };
   });
 })();
 
@@ -2762,23 +2920,43 @@ function updateNoteCount() {
 (function() {
   let dragging = false, dx = 0, dy = 0;
   const titlebar = document.getElementById('note-titlebar');
-  titlebar.addEventListener('mousedown', e => {
-    if (e.target.classList.contains('note-tl')) return;
+
+  function startNoteDrag(clientX, clientY) {
     const p = document.getElementById('note-panel');
     const r = p.getBoundingClientRect();
     // Convert to left/top if using right/bottom
     p.style.right = 'auto'; p.style.bottom = 'auto';
     p.style.left = r.left + 'px'; p.style.top = r.top + 'px';
-    dragging = true; dx = e.clientX - r.left; dy = e.clientY - r.top;
-    e.preventDefault();
-  });
-  window.addEventListener('mousemove', e => {
+    dragging = true; dx = clientX - r.left; dy = clientY - r.top;
+  }
+  function moveNotePanel(clientX, clientY) {
     if (!dragging) return;
     const p = document.getElementById('note-panel');
-    p.style.left = Math.max(0, Math.min(window.innerWidth  - 80, e.clientX - dx)) + 'px';
-    p.style.top  = Math.max(0, Math.min(window.innerHeight - 40, e.clientY - dy)) + 'px';
+    p.style.left = Math.max(0, Math.min(window.innerWidth  - 80, clientX - dx)) + 'px';
+    p.style.top  = Math.max(0, Math.min(window.innerHeight - 40, clientY - dy)) + 'px';
+  }
+
+  titlebar.addEventListener('mousedown', e => {
+    if (e.target.classList.contains('note-tl')) return;
+    startNoteDrag(e.clientX, e.clientY);
+    e.preventDefault();
   });
+  window.addEventListener('mousemove', e => { moveNotePanel(e.clientX, e.clientY); });
   window.addEventListener('mouseup', () => { dragging = false; });
+
+  // Touch support for note panel drag
+  titlebar.addEventListener('touchstart', e => {
+    if (e.target.classList.contains('note-tl')) return;
+    const t = e.touches[0];
+    startNoteDrag(t.clientX, t.clientY);
+    e.preventDefault();
+  }, {passive: false});
+  window.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    const t = e.touches[0];
+    moveNotePanel(t.clientX, t.clientY);
+  }, {passive: true});
+  window.addEventListener('touchend', () => { dragging = false; });
 })();
 
 // ════════════════════════════════════════════════
@@ -2906,6 +3084,72 @@ vp.addEventListener('mousedown', e => {
 });
 window.addEventListener('mousemove', e => { if(!drag) return; pan.x=pO.x+(e.clientX-dO.x); pan.y=pO.y+(e.clientY-dO.y); applyTransform(); });
 window.addEventListener('mouseup',   () => { drag=false; vp.style.cursor='default'; });
+
+// ── Touch pan/zoom on canvas ──
+(function() {
+  let touchPan = false;
+  let tO = {x:0, y:0}, tpO = {x:0, y:0};
+  let pinchStartDist = 0, pinchStartZoom = 1, pinchMidX = 0, pinchMidY = 0, pinchStartPan = {x:0, y:0};
+
+  function touchDist(t) {
+    const dx = t[0].clientX - t[1].clientX;
+    const dy = t[0].clientY - t[1].clientY;
+    return Math.sqrt(dx*dx + dy*dy);
+  }
+  function touchMid(t) {
+    return { x: (t[0].clientX + t[1].clientX) / 2, y: (t[0].clientY + t[1].clientY) / 2 };
+  }
+
+  vp.addEventListener('touchstart', e => {
+    if (e.target.closest('.node') || e.target.closest('#ctx-menu') || e.target.closest('#modal-overlay')) return;
+    e.preventDefault();
+    const touches = e.touches;
+    if (touches.length === 1) {
+      touchPan = true;
+      tO = {x: touches[0].clientX, y: touches[0].clientY};
+      tpO = {...pan};
+    } else if (touches.length === 2) {
+      touchPan = false;
+      pinchStartDist = touchDist(touches);
+      pinchStartZoom = zoom;
+      const mid = touchMid(touches);
+      pinchMidX = mid.x; pinchMidY = mid.y;
+      pinchStartPan = {...pan};
+    }
+  }, {passive: false});
+
+  vp.addEventListener('touchmove', e => {
+    e.preventDefault();
+    const touches = e.touches;
+    if (touches.length === 1 && touchPan) {
+      pan.x = tpO.x + (touches[0].clientX - tO.x);
+      pan.y = tpO.y + (touches[0].clientY - tO.y);
+      applyTransform();
+    } else if (touches.length === 2) {
+      const dist = touchDist(touches);
+      if (pinchStartDist < 1) return;
+      const scaleFactor = dist / pinchStartDist;
+      const nz = Math.min(3, Math.max(0.15, pinchStartZoom * scaleFactor));
+      const r = vp.getBoundingClientRect();
+      const mx = pinchMidX - r.left, my = pinchMidY - r.top;
+      pan.x = mx - (mx - pinchStartPan.x) * (nz / pinchStartZoom);
+      pan.y = my - (my - pinchStartPan.y) * (nz / pinchStartZoom);
+      zoom = nz;
+      applyTransform();
+    }
+  }, {passive: false});
+
+  vp.addEventListener('touchend', e => {
+    if (e.touches.length === 0) {
+      touchPan = false;
+    } else if (e.touches.length === 1) {
+      // Went from 2-finger to 1-finger: reset 1-finger pan origin
+      touchPan = true;
+      tO = {x: e.touches[0].clientX, y: e.touches[0].clientY};
+      tpO = {...pan};
+    }
+  }, {passive: false});
+})();
 
 function fitView() {
   if (!tree) return;
