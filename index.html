@@ -3,38 +3,95 @@
 <head>
   <meta charset="UTF-8"/>
   <title>IssueTree</title>
+  <!-- Phosphor-style tree favicon (evergreen silhouette) -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath fill='%232e7d32' d='M128,20 L196,96 H168 L212,168 H148 V216 H108 V168 H44 L88,96 H60 Z'/%3E%3C/svg%3E"/>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Base fonts always loaded -->
+  <link id="google-fonts-base" href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Extra font pairs loaded lazily via JS -->
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    /* ── Material Design 3 – Light (default) ── */
     :root {
-      --bg:        #f2efe9;
-      --dot:       #cfc8be;
-      --navy:      #1c2b3a;
-      --green:     #166638;
-      --teal:      #0e4d6c;
-      --rust:      #7d3512;
-      --ink:       #1c2b3a;
-      --mid:       #5a6e80;
-      --faint:     #9aacba;
-      --white:     #ffffff;
-      --surface:   #faf9f6;
-      --border:    #e2ddd6;
-      --shadow-sm: 0 1px 4px rgba(28,43,58,.07);
-      --shadow-md: 0 4px 16px rgba(28,43,58,.10);
-      --shadow-lg: 0 8px 32px rgba(28,43,58,.14);
+      --font-head: 'Libre Baskerville', serif;
+      --font-body: 'Plus Jakarta Sans', sans-serif;
+      --bg:        #ffffff;
+      --dot:       #e0dcd8;
+      --navy:      #1b4332;
+      --green:     #1b5e20;
+      --teal:      #006064;
+      --rust:      #bf360c;
+      --purple:    #4a148c;
+      --ink:       #1c1b1f;
+      --mid:       #49454f;
+      --faint:     #79747e;
+      --white:     #fffbfe;
+      --surface:   #fffbfe;
+      --border:    #cac4d0;
+      --shadow-sm: 0 1px 4px rgba(28,27,31,.07);
+      --shadow-md: 0 4px 16px rgba(28,27,31,.11);
+      --shadow-lg: 0 8px 32px rgba(28,27,31,.16);
       --r:         9px;
+      /* Node-depth backgrounds */
+      --node-bg-2:    #ffffff;
+      --node-bg-3:    #f7f2fb;
+      --node-bdr-2:   #e0d9e8;
+      --node-bdr-3:   #ece6f0;
+      /* Solid surfaces (no glass) */
+      --glass-bg:     #ffffff;
+      --glass-border: var(--border);
+      --glass-inset:  transparent;
     }
+
+    /* ── Material Design 3 – Dark ── */
+    html[data-theme="dark"] {
+      --bg:        #141218;
+      --dot:       #2b2930;
+      --navy:      #1b4332;
+      --green:     #1b5e20;
+      --teal:      #006064;
+      --rust:      #bf360c;
+      --purple:    #4a148c;
+      --ink:       #e6e1e5;
+      --mid:       #cac4d0;
+      --faint:     #938f99;
+      --white:     #1c1b1f;
+      --surface:   #211f26;
+      --border:    #49454e;
+      --shadow-sm: 0 1px 4px rgba(0,0,0,.35);
+      --shadow-md: 0 4px 16px rgba(0,0,0,.45);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,.55);
+      --node-bg-2:    #2d2a33;
+      --node-bg-3:    #252329;
+      --node-bdr-2:   #49454e;
+      --node-bdr-3:   #3d3943;
+      --glass-bg:     #1c1b1f;
+      --glass-border: var(--border);
+      --glass-inset:  transparent;
+      color-scheme: dark;
+    }
+
+    html { transition: background-color .25s, color .25s; }
 
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
       background-color: var(--bg);
-      background-image: radial-gradient(circle, var(--dot) 1px, transparent 1px);
       background-size: 24px 24px;
       overflow: hidden;
       width: 100vw; height: 100vh;
       -webkit-font-smoothing: antialiased;
+      transition: background-color .25s;
+    }
+    /* Light: dot grid */
+    body { background-image: radial-gradient(circle, var(--dot) 1px, transparent 1px); }
+    /* Dark: cross grid */
+    html[data-theme="dark"] body {
+      background-image:
+        linear-gradient(var(--dot) 1px, transparent 1px),
+        linear-gradient(90deg, var(--dot) 1px, transparent 1px);
+      background-size: 24px 24px;
     }
 
     /* ── Views ── */
@@ -56,7 +113,7 @@
     }
     #home-logo {
       display: block;
-      font-family: 'Libre Baskerville', serif;
+      font-family: var(--font-head);
       font-size: 32px; color: var(--navy);
       letter-spacing: -1px; line-height: 1;
     }
@@ -73,7 +130,7 @@
       box-shadow: var(--shadow-sm);
       transition: background .12s, transform .1s;
     }
-    #btn-new-tree:hover { background: #2d3f50; transform: translateY(-1px); }
+    #btn-new-tree:hover { background: #2d6a4f; transform: translateY(-1px); }
 
     #home-grid {
       display: grid;
@@ -90,8 +147,14 @@
       box-shadow: var(--shadow-sm);
     }
     .tree-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    /* Color accent stripe on tree cards */
+    .tree-card { overflow: hidden; }
+    .tree-card-accent {
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      border-radius: 12px 12px 0 0;
+    }
     .tree-card-name {
-      font-family: 'Libre Baskerville', serif;
+      font-family: var(--font-head);
       font-size: 13.5px; color: var(--navy);
       line-height: 1.35; margin-bottom: 10px;
       padding-right: 26px; word-break: break-word;
@@ -107,6 +170,65 @@
       transition: background .1s, color .1s;
     }
     .tree-card-btn:hover { background: var(--border); color: var(--mid); }
+
+    /* ── Issue Tree explainer banner ── */
+    #home-explainer {
+      margin-bottom: 40px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+    .expl-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 20px 18px;
+      position: relative; overflow: hidden;
+    }
+    .expl-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: var(--navy); border-radius: 14px 14px 0 0;
+      opacity: .35;
+    }
+    .expl-card-icon {
+      font-size: 20px; margin-bottom: 10px; display: block; line-height: 1;
+    }
+    .expl-card-title {
+      font-family: var(--font-head);
+      font-size: 12.5px; color: var(--navy);
+      margin-bottom: 7px; line-height: 1.3;
+    }
+    .expl-card-body {
+      font-size: 11.5px; color: var(--mid);
+      line-height: 1.6;
+    }
+    .expl-intro {
+      grid-column: 1 / -1;
+      background: linear-gradient(135deg, var(--navy) 0%, #2d6a4f 100%);
+      border: none; border-radius: 14px;
+      padding: 24px 28px;
+      color: #fff;
+    }
+    .expl-intro::before { display: none; }
+    .expl-intro-eyebrow {
+      font-size: 10px; font-weight: 700; letter-spacing: .8px;
+      text-transform: uppercase; color: rgba(255,255,255,.55);
+      margin-bottom: 8px;
+    }
+    .expl-intro-headline {
+      font-family: var(--font-head);
+      font-size: 17px; color: #fff;
+      line-height: 1.4; margin-bottom: 10px;
+      max-width: 680px;
+    }
+    .expl-intro-body {
+      font-size: 12px; color: rgba(255,255,255,.78);
+      line-height: 1.7; max-width: 720px;
+    }
+    @media (max-width: 660px) {
+      #home-explainer { grid-template-columns: 1fr; }
+    }
 
     #home-empty {
       text-align: center; padding: 80px 20px;
@@ -144,17 +266,16 @@
     #new-tree-overlay {
       position: fixed; inset: 0; z-index: 1200;
       background: rgba(28,43,58,.18);
-      backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
       display: none; align-items: center; justify-content: center;
     }
     #new-tree-modal {
-      background: var(--white); border-radius: 16px;
-      padding: 26px 26px 22px; width: 400px;
+      background: var(--glass-bg);
+      border-radius: 18px; padding: 26px 26px 22px; width: 420px;
       box-shadow: var(--shadow-lg), 0 0 0 1px var(--border);
       animation: modalIn .18s cubic-bezier(.34,1.4,.64,1);
     }
     #ntm-title {
-      font-family: 'Libre Baskerville', serif;
+      font-family: var(--font-head);
       font-size: 16px; color: var(--navy); margin-bottom: 18px;
     }
     .ntm-label {
@@ -188,6 +309,19 @@
     .tpl-card-desc  { font-size: 10px; color: var(--faint); }
     .ntm-btns { display: flex; gap: 8px; justify-content: flex-end; }
 
+    /* Font picker */
+    #ntm-fonts { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 20px; }
+    .font-opt input[type="radio"] { display: none; }
+    .font-card {
+      border: 1.5px solid var(--border); border-radius: 9px;
+      padding: 8px 12px; cursor: pointer; background: var(--surface);
+      transition: border-color .12s, background .12s; text-align: center;
+      min-width: 80px; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    }
+    .font-opt input:checked + .font-card { border-color: var(--teal); background: rgba(14,77,108,.06); }
+    .font-card-sample { font-size: 16px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+    .font-card-label { font-size: 9.5px; font-weight: 600; color: var(--faint); text-transform: uppercase; letter-spacing: .4px; }
+
     /* Color theme picker */
     #ntm-themes { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
     .theme-opt input[type="radio"] { display: none; }
@@ -209,17 +343,18 @@
       position: fixed; top: 16px; left: 50%;
       transform: translateX(-50%);
       z-index: 500;
-      background: rgba(250,249,246,.94);
-      backdrop-filter: blur(14px) saturate(1.4);
-      -webkit-backdrop-filter: blur(14px) saturate(1.4);
+      background: var(--glass-bg);
       border-radius: 14px;
       padding: 8px 12px;
       display: flex; align-items: center; gap: 6px;
       white-space: nowrap;
       box-shadow: var(--shadow-md), 0 0 0 1px var(--border);
+      transition: background .25s, box-shadow .25s;
     }
+    /* Theme toggle icon */
+    #btn-theme { font-size: 14px; padding: 4px 8px; }
     #tb-title {
-      font-family: 'Libre Baskerville', serif;
+      font-family: var(--font-head);
       font-size: 13px; color: var(--navy);
       letter-spacing: -.1px; cursor: text;
       border-radius: 4px; padding: 2px 5px;
@@ -228,7 +363,7 @@
       transition: background .1s;
     }
     #tb-title:hover  { background: rgba(28,43,58,.05); }
-    #tb-title:focus  { background: #fff; box-shadow: 0 0 0 2px var(--teal); }
+    #tb-title:focus  { background: var(--surface); box-shadow: 0 0 0 2px var(--teal); }
     .tsep { width: 1px; height: 18px; background: var(--border); margin: 0 2px; }
     .tbtn {
       background: transparent; border: none;
@@ -239,7 +374,7 @@
     }
     .tbtn:hover  { background: var(--border); color: var(--ink); }
     .tbtn.on     { background: var(--navy); color: #fff; }
-    .tbtn.on:hover { background: #2d3f50; }
+    .tbtn.on:hover { background: #2d6a4f; }
     .tbtn.danger { color: #b03020; }
     .tbtn.danger:hover { background: #fdecea; }
 
@@ -253,7 +388,7 @@
       background: var(--surface); outline: none; width: 148px;
       transition: border-color .15s, width .2s, background .15s;
     }
-    #search-input:focus { border-color: var(--teal); width: 186px; background: #fff; }
+    #search-input:focus { border-color: var(--teal); width: 186px; background: var(--surface); }
     #search-input::placeholder { color: var(--faint); }
     #srch-clear { position: absolute; right: 7px; font-size: 10px; color: var(--faint); cursor: pointer; display: none; }
     #srch-clear:hover { color: var(--mid); }
@@ -267,8 +402,8 @@
     #export-wrap { position: relative; }
     #export-menu {
       position: absolute; top: calc(100% + 6px); right: 0;
-      background: var(--white); border-radius: 10px; padding: 5px;
-      min-width: 128px;
+      background: var(--glass-bg);
+      border-radius: 10px; padding: 5px; min-width: 128px;
       box-shadow: var(--shadow-lg), 0 0 0 1px var(--border);
       display: none; z-index: 600; animation: menuIn .12s ease;
     }
@@ -281,31 +416,54 @@
     .exp-item:hover { background: var(--bg); }
     .exp-icon { width: 16px; text-align: center; font-size: 11px; color: var(--mid); }
 
-    /* ── Hint ── */
-    #hint {
-      position: fixed; bottom: 16px; left: 50%;
-      transform: translateX(-50%);
-      background: rgba(250,249,246,.88);
-      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-      border-radius: 20px; padding: 5px 16px;
-      font-size: 10.5px; color: var(--faint);
-      box-shadow: var(--shadow-sm), 0 0 0 1px var(--border);
-      z-index: 200; pointer-events: none; white-space: nowrap;
+    /* ── Help button + panel ── */
+    #help-btn {
+      position: fixed; top: 16px; right: 16px; z-index: 600;
+      width: 30px; height: 30px; border-radius: 50%;
+      background: var(--glass-bg); border: 1.5px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      font-size: 13px; font-weight: 700; color: var(--mid);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background .12s, color .12s, box-shadow .12s;
     }
-    #hint strong { color: var(--mid); font-weight: 600; }
+    #help-btn:hover { background: var(--border); color: var(--ink); box-shadow: var(--shadow-md); }
+    #help-btn.active { background: var(--navy); color: #fff; border-color: var(--navy); }
 
-    /* Legend */
-    #legend {
-      position: fixed; bottom: 16px; right: 16px;
-      display: flex; gap: 10px; align-items: center;
-      background: rgba(250,249,246,.88);
-      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-      border-radius: 20px; padding: 5px 12px;
-      box-shadow: var(--shadow-sm), 0 0 0 1px var(--border);
-      z-index: 200;
+    #help-panel {
+      position: fixed; top: 54px; right: 16px; z-index: 599;
+      width: 300px; max-height: 80vh; overflow-y: auto;
+      background: var(--glass-bg); border: 1px solid var(--border);
+      border-radius: 14px; padding: 16px;
+      box-shadow: var(--shadow-lg);
+      display: none;
+      animation: menuIn .14s ease;
     }
-    .leg     { display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; color: var(--mid); }
-    .leg-dot { width: 8px; height: 8px; border-radius: 2px; }
+    #help-panel.open { display: block; }
+    .help-section { margin-bottom: 14px; }
+    .help-section:last-child { margin-bottom: 0; }
+    .help-title {
+      font-size: 10px; font-weight: 700; color: var(--faint);
+      text-transform: uppercase; letter-spacing: .6px; margin-bottom: 7px;
+    }
+    .help-row {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 8px; padding: 4px 0;
+      font-size: 11.5px; color: var(--ink); line-height: 1.4;
+      border-bottom: 1px solid var(--border);
+    }
+    .help-row:last-child { border-bottom: none; }
+    .help-desc { flex: 1; color: var(--mid); }
+    .help-key {
+      display: flex; gap: 3px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end;
+    }
+    kbd {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--surface); border: 1px solid var(--border);
+      border-bottom-width: 2px; border-radius: 4px;
+      font-family: var(--font-body); font-size: 9.5px; font-weight: 600; color: var(--ink);
+      padding: 1px 5px; white-space: nowrap;
+    }
+
 
     /* ── Canvas ── */
     #viewport  { width: 100vw; height: 100vh; overflow: hidden; position: relative; }
@@ -317,7 +475,7 @@
       position: absolute; border-radius: var(--r);
       cursor: pointer; user-select: none;
       display: flex; flex-direction: column; overflow: hidden;
-      transition: box-shadow .14s, transform .12s, opacity .18s;
+      transition: box-shadow .14s, opacity .18s;
     }
     .node:hover:not(.leaf) { transform: translateY(-1px); }
     .node.leaf { cursor: text; }
@@ -335,6 +493,7 @@
       display: flex; align-items: center;
     }
     .node-lbl {
+      font-family: var(--font-body);
       font-weight: 600; line-height: 1.35;
       word-break: break-word; width: 100%;
     }
@@ -380,8 +539,8 @@
     /* ── Context menu ── */
     #ctx-menu {
       position: fixed; z-index: 600;
-      background: var(--white); border-radius: 11px; padding: 5px;
-      min-width: 170px;
+      background: var(--glass-bg);
+      border-radius: 13px; padding: 5px; min-width: 175px;
       box-shadow: var(--shadow-lg), 0 0 0 1px var(--border);
       display: none; animation: menuIn .12s ease;
     }
@@ -401,19 +560,96 @@
     .ctx-item.danger:hover { background: #fdecea; }
     .ctx-item.disabled { opacity: .35; pointer-events: none; }
     .ctx-sep { height: 1px; background: var(--border); margin: 4px 5px; }
+    /* Status indicator inside ctx-item */
+    .ctx-status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── Search nav ── */
+    .srch-nav { display: flex; align-items: center; gap: 1px; margin-left: 2px; }
+    .srch-nav-btn {
+      background: transparent; border: none; color: var(--faint);
+      width: 18px; height: 18px; border-radius: 4px;
+      font-size: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background .1s, color .1s; line-height: 1; font-weight: 700;
+    }
+    .srch-nav-btn:hover:not(:disabled) { background: var(--border); color: var(--ink); }
+    .srch-nav-btn:disabled { opacity: .35; cursor: default; }
+    .srch-nav-count { font-size: 9.5px; color: var(--faint); white-space: nowrap; min-width: 30px; text-align: center; }
+
+    /* ── Focused node (keyboard nav) ── */
+    .node.kb-focus { box-shadow: 0 0 0 2.5px var(--teal), 0 4px 16px rgba(0,96,100,.18) !important; z-index: 3; }
+
+    /* ── Status pills ── */
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 1px 5px; border-radius: 6px;
+      font-size: 8px; font-weight: 700; letter-spacing: .3px;
+      flex-shrink: 0; line-height: 14px; text-transform: uppercase;
+    }
+    .status-pill.s-priority   { background: rgba(220,50,30,.12);  color: #c0391c; }
+    .status-pill.s-inprogress { background: rgba(14,100,180,.12); color: #0e64b4; }
+    .status-pill.s-done       { background: rgba(30,160,60,.12);  color: #1a9636; }
+    .node-footer.footer-light .status-pill.s-priority   { background: rgba(255,100,80,.2);   color: #ffb4a9; }
+    .node-footer.footer-light .status-pill.s-inprogress { background: rgba(100,180,255,.2);  color: #9ecaff; }
+    .node-footer.footer-light .status-pill.s-done       { background: rgba(100,220,130,.2);  color: #a0e8b0; }
+
+    /* ── Drag ghost ── */
+    .drag-ghost {
+      position: fixed; pointer-events: none; z-index: 9999;
+      opacity: 0.88; border-radius: var(--r);
+      box-shadow: var(--shadow-lg), 0 0 0 2px #3b82f6;
+      transform: rotate(1.5deg) scale(1.03);
+    }
+    .node.drop-over { box-shadow: 0 0 0 2.5px #3b82f6, 0 4px 20px rgba(59,130,246,.25) !important; z-index: 4; }
+    .drop-line {
+      position: absolute; height: 2px; background: #3b82f6;
+      border-radius: 2px; pointer-events: none; z-index: 10;
+      box-shadow: 0 0 6px rgba(59,130,246,.6);
+    }
+
+    /* ── Minimap ── */
+    #minimap {
+      position: fixed; bottom: 62px; right: 16px;
+      width: 168px; height: 96px; z-index: 300;
+      border-radius: 9px; overflow: hidden; cursor: crosshair;
+      background: var(--glass-bg); border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+    #minimap-canvas { display: block; width: 168px; height: 96px; }
+
+    /* ── Focus breadcrumb ── */
+    #focus-crumb {
+      position: fixed; top: 68px; left: 50%; transform: translateX(-50%);
+      z-index: 500; background: var(--glass-bg);
+      border-radius: 20px; padding: 4px 8px 4px 14px;
+      font-size: 11px; color: var(--mid);
+      box-shadow: var(--shadow-sm), 0 0 0 1px var(--border);
+      white-space: nowrap; max-width: 500px; overflow: hidden;
+      text-overflow: ellipsis; display: none; align-items: center; gap: 4px;
+    }
+    .crumb-item { cursor: pointer; color: var(--teal); }
+    .crumb-item:hover { text-decoration: underline; }
+    .crumb-sep { opacity: .4; font-size: 9px; }
+    #btn-focus-exit {
+      margin-left: 6px; padding: 2px 9px; border-radius: 10px;
+      background: var(--border); border: none; font-size: 10px;
+      font-weight: 600; color: var(--mid); cursor: pointer; font-family: inherit; flex-shrink: 0;
+    }
+    #btn-focus-exit:hover { background: var(--mid); color: var(--white); }
+
+    /* Edge style toggle pill */
+    #edge-style-btn { font-size: 10px; }
 
     /* ── Add / Rename modal ── */
     #modal-overlay {
       position: fixed; inset: 0; z-index: 700;
       background: rgba(28,43,58,.18);
-      backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
       display: none; align-items: center; justify-content: center;
       animation: fadeIn .15s ease;
     }
     @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
     #modal {
-      background: var(--white); border-radius: 14px;
-      padding: 20px 22px; min-width: 320px;
+      background: var(--glass-bg);
+      border-radius: 16px; padding: 20px 22px; min-width: 320px;
       box-shadow: var(--shadow-lg), 0 0 0 1px var(--border);
       animation: modalIn .18s cubic-bezier(.34,1.4,.64,1);
     }
@@ -436,7 +672,7 @@
     .mbtn.cancel { background: var(--bg); color: var(--mid); }
     .mbtn.cancel:hover { background: var(--border); }
     .mbtn.ok { background: var(--navy); color: #fff; }
-    .mbtn.ok:hover { background: #2d3f50; }
+    .mbtn.ok:hover { background: #2d6a4f; }
 
     /* Inline rename input */
     .rename-input {
@@ -449,32 +685,69 @@
       box-shadow: 0 0 0 4px rgba(14,77,108,.12);
     }
 
-    /* ── Notes panel ── */
-    #note-overlay {
-      position: fixed; inset: 0; z-index: 700;
-      background: rgba(28,43,58,.18);
-      backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
-      display: none; align-items: center; justify-content: center;
-    }
+    /* ── Terminal floating note panel ── */
     #note-panel {
-      background: var(--white); border-radius: 14px;
-      padding: 20px 22px 18px; width: 460px; max-width: calc(100vw - 40px);
-      box-shadow: var(--shadow-lg), 0 0 0 1px var(--border);
-      animation: modalIn .18s cubic-bezier(.34,1.4,.64,1);
+      position: fixed; z-index: 900;
+      right: 24px; top: 80px;
+      width: 380px; height: 300px;
+      min-width: 260px; min-height: 180px;
+      display: none; flex-direction: column;
+      border-radius: 11px; overflow: hidden; resize: both;
+      background: rgba(14, 12, 22, 0.95);
+      border: 1px solid rgba(255,255,255,.10);
+      backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
+      box-shadow: 0 24px 64px rgba(0,0,0,.52), 0 0 0 1px rgba(255,255,255,.06),
+                  inset 0 1px 0 rgba(255,255,255,.07);
+      animation: noteIn .18s cubic-bezier(.34,1.4,.64,1);
     }
-    #note-panel-title { font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 3px; }
-    #note-panel-sub   { font-size: 11px; color: var(--faint); margin-bottom: 13px;
-                        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    @keyframes noteIn {
+      from { opacity:0; transform: scale(.94) translateY(8px); }
+      to   { opacity:1; transform: scale(1) translateY(0); }
+    }
+    #note-panel.minimized { height: 40px !important; min-height: 40px; resize: none; }
+    #note-titlebar {
+      display: flex; align-items: center; padding: 9px 11px; gap: 7px;
+      cursor: grab; user-select: none; flex-shrink: 0;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      background: rgba(255,255,255,.03);
+    }
+    #note-titlebar:active { cursor: grabbing; }
+    .note-tl {
+      width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
+      cursor: pointer; transition: filter .1s;
+    }
+    .note-tl:hover { filter: brightness(1.25); }
+    .note-tl-close  { background: #ff5f57; }
+    .note-tl-min    { background: #febc2e; }
+    .note-tl-expand { background: #28c840; cursor: default; opacity: .5; }
+    #note-title-text {
+      flex: 1; font-size: 11px; font-weight: 600; letter-spacing: .15px;
+      color: rgba(255,255,255,.55); overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+    }
     #note-textarea {
-      width: 100%; height: 130px;
-      padding: 9px 12px;
-      border: 1.5px solid var(--border); border-radius: 8px;
-      font-size: 12.5px; font-family: inherit; color: var(--ink);
-      resize: vertical; outline: none; background: var(--surface);
-      transition: border-color .15s; line-height: 1.5;
+      flex: 1; width: 100%; padding: 13px 15px;
+      background: transparent; border: none; outline: none; resize: none;
+      color: rgba(255,255,255,.87);
+      font-family: 'SF Mono', 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+      font-size: 12.5px; line-height: 1.65; caret-color: #a78bfa;
     }
-    #note-textarea:focus { border-color: var(--teal); background: #fff; }
-    #note-char-count { font-size: 10px; color: var(--faint); text-align: right; margin-top: 4px; }
+    #note-textarea::placeholder { color: rgba(255,255,255,.22); }
+    #note-panel-footer {
+      display: flex; align-items: center; gap: 6px; padding: 7px 11px; flex-shrink: 0;
+      border-top: 1px solid rgba(255,255,255,.07);
+      background: rgba(255,255,255,.03);
+    }
+    #note-char-count { flex: 1; font-size: 10px; color: rgba(255,255,255,.3); font-family: monospace; }
+    .note-btn {
+      padding: 4px 11px; border-radius: 6px; border: none; font-size: 11px;
+      font-weight: 600; font-family: inherit; cursor: pointer; transition: background .1s;
+    }
+    .note-btn.cancel { background: rgba(255,255,255,.1); color: rgba(255,255,255,.65); }
+    .note-btn.cancel:hover { background: rgba(255,255,255,.16); }
+    .note-btn.save   { background: #7c3aed; color: #fff; }
+    .note-btn.save:hover { background: #6d28d9; }
+    .note-btn.remove { background: transparent; color: rgba(255,100,80,.7); margin-right: auto; font-size: 10.5px; }
+    .note-btn.remove:hover { color: #ff5f57; }
   </style>
 </head>
 <body>
@@ -487,10 +760,50 @@
     <div id="home-header">
       <div>
         <span id="home-logo">IssueTree</span>
-        <span id="home-tagline">Structured problem-solving</span>
+        <span id="home-tagline">Structured problem-solving &nbsp;·&nbsp; <span title="All trees are saved in your browser's local storage" style="color:var(--teal);cursor:help">💾 Saved locally</span></span>
       </div>
-      <button id="btn-new-tree" onclick="showNewTreeModal()">+ New Tree</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="tbtn" onclick="exportAllTrees()" title="Backup all trees to JSON" style="font-size:11.5px;padding:6px 12px;border:1.5px solid var(--border);border-radius:8px">⬇ Backup</button>
+        <label title="Restore trees from backup" style="cursor:pointer">
+          <input type="file" id="import-all-file" accept=".json" style="display:none" onchange="importAllTrees(this)"/>
+          <span class="tbtn" style="font-size:11.5px;padding:6px 12px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer">⬆ Restore</span>
+        </label>
+        <button id="btn-new-tree" onclick="showNewTreeModal()">+ New Tree</button>
+      </div>
     </div>
+    <!-- Explainer -->
+    <div id="home-explainer">
+      <div class="expl-intro">
+        <div class="expl-intro-eyebrow">Structured Problem-Solving</div>
+        <div class="expl-intro-headline">Break any problem into a clear, testable tree of issues.</div>
+        <div class="expl-intro-body">
+          Issue trees are a cornerstone of top-tier analytical work. Start with a single
+          root question, then decompose it into mutually exclusive, collectively exhaustive
+          (MECE) branches — each one a testable hypothesis. Prioritize the branches most
+          likely to drive the answer, go deep only where it matters, and let the structure
+          reveal where evidence is missing and where it's not.
+        </div>
+      </div>
+
+      <div class="expl-card">
+        <span class="expl-card-icon">❶</span>
+        <div class="expl-card-title">Frame the root question</div>
+        <div class="expl-card-body">State the core problem as a single, specific question — not a topic. A sharp root node keeps every branch on-mission.</div>
+      </div>
+
+      <div class="expl-card">
+        <span class="expl-card-icon">❷</span>
+        <div class="expl-card-title">Decompose MECE</div>
+        <div class="expl-card-body">Each level should be mutually exclusive and collectively exhaustive. No overlaps, no gaps. Use the ⋮ menu to add, rename, and reorder children.</div>
+      </div>
+
+      <div class="expl-card">
+        <span class="expl-card-icon">❸</span>
+        <div class="expl-card-title">Prioritize &amp; test</div>
+        <div class="expl-card-body">Mark high-impact branches as Priority. Focus subtrees to work deep without losing context. Hypotheses should be falsifiable — update the tree as evidence comes in.</div>
+      </div>
+    </div>
+
     <div id="home-grid"></div>
     <div id="home-empty" style="display:none">
       <p>No issue trees yet.</p>
@@ -508,6 +821,9 @@
   <div id="toolbar">
     <button class="tbtn" onclick="goHome()" style="letter-spacing:-.3px;padding-left:7px">← Trees</button>
     <div class="tsep"></div>
+    <button class="tbtn" id="btn-undo" onclick="undo()" title="Undo (⌘Z)" style="font-size:13px;padding:4px 8px">↩</button>
+    <button class="tbtn" id="btn-redo" onclick="redo()" title="Redo (⌘⇧Z)" style="font-size:13px;padding:4px 8px">↪</button>
+    <div class="tsep"></div>
     <span id="tb-title"
           contenteditable="true"
           spellcheck="false"
@@ -518,6 +834,11 @@
       <span class="srch-icon">⌕</span>
       <input id="search-input" type="text" placeholder="Search…" autocomplete="off" oninput="onSearch(this.value)"/>
       <span id="srch-clear" onclick="clearSearch()">✕</span>
+      <span id="srch-nav" class="srch-nav" style="display:none">
+        <button class="srch-nav-btn" id="srch-prev" onclick="searchPrev()" title="Previous match">▲</button>
+        <span class="srch-nav-count" id="srch-count"></span>
+        <button class="srch-nav-btn" id="srch-next" onclick="searchNext()" title="Next match">▼</button>
+      </span>
     </div>
     <div class="tsep"></div>
     <button class="tbtn" id="btn-l1"  onclick="setDepth(1)">L1</button>
@@ -525,6 +846,7 @@
     <button class="tbtn" id="btn-all" onclick="setDepth(99)">All</button>
     <div class="tsep"></div>
     <button class="tbtn" onclick="fitView()">Fit ⊡</button>
+    <button class="tbtn" id="edge-style-btn" onclick="cycleEdgeStyle()" title="Edge style">⌇ Bezier</button>
     <div class="tsep"></div>
     <div id="export-wrap">
       <button class="tbtn" id="btn-export" onclick="toggleExportMenu()">Export ▾</button>
@@ -537,17 +859,70 @@
     <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(this)"/>
     <button class="tbtn" onclick="document.getElementById('import-file').click()" title="Import JSON tree">↑ Import</button>
     <div class="tsep"></div>
+    <button class="tbtn" id="btn-theme" onclick="toggleTheme()" title="Toggle dark / light mode">☀</button>
+    <div class="tsep"></div>
     <div id="save-dot" title="Auto-saved"></div>
   </div>
 
-  <!-- Hint -->
-  <div id="hint">Scroll to pan &nbsp;·&nbsp; Pinch to zoom &nbsp;·&nbsp; Click to expand &nbsp;·&nbsp; Click <strong>⋮</strong> on any node for options &nbsp;·&nbsp; <strong>Double-click</strong> to rename</div>
+  <!-- Help button + panel -->
+  <button id="help-btn" onclick="toggleHelp()" title="Help &amp; Shortcuts">?</button>
+  <div id="help-panel">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <span style="font-family:var(--font-head);font-size:13px;color:var(--navy)">Help &amp; Shortcuts</span>
+      <button onclick="toggleHelp()" style="background:none;border:none;cursor:pointer;color:var(--faint);font-size:14px;line-height:1;padding:2px 5px">✕</button>
+    </div>
 
-  <!-- Legend -->
-  <div id="legend">
-    <div class="leg"><div class="leg-dot" style="background:var(--green)"></div>Pricing</div>
-    <div class="leg"><div class="leg-dot" style="background:var(--teal)"></div>Volume</div>
-    <div class="leg"><div class="leg-dot" style="background:var(--rust)"></div>Cost</div>
+    <div class="help-section">
+      <div class="help-title">Canvas</div>
+      <div class="help-row"><span class="help-desc">Pan</span><span class="help-key"><kbd>Scroll</kbd> or <kbd>Drag</kbd></span></div>
+      <div class="help-row"><span class="help-desc">Zoom</span><span class="help-key"><kbd>Pinch</kbd> or <kbd>⌘ Scroll</kbd></span></div>
+      <div class="help-row"><span class="help-desc">Fit view</span><span class="help-key"><kbd>Fit ⊡</kbd> toolbar</span></div>
+      <div class="help-row"><span class="help-desc">Click minimap</span><span class="help-key">Pan to area</span></div>
+    </div>
+
+    <div class="help-section">
+      <div class="help-title">Nodes</div>
+      <div class="help-row"><span class="help-desc">Expand / collapse</span><span class="help-key"><kbd>Click</kbd></span></div>
+      <div class="help-row"><span class="help-desc">Rename</span><span class="help-key"><kbd>Double-click</kbd></span></div>
+      <div class="help-row"><span class="help-desc">Node menu</span><span class="help-key"><kbd>⋮</kbd> button</span></div>
+      <div class="help-row"><span class="help-desc">Add child</span><span class="help-key"><kbd>⋮</kbd> → Add child</span></div>
+      <div class="help-row"><span class="help-desc">Reparent / reorder</span><span class="help-key">Drag header</span></div>
+      <div class="help-row"><span class="help-desc">Focus subtree</span><span class="help-key"><kbd>⋮</kbd> → Focus subtree</span></div>
+      <div class="help-row"><span class="help-desc">Set status</span><span class="help-key"><kbd>⋮</kbd> → Priority / In Progress / Done</span></div>
+      <div class="help-row"><span class="help-desc">Add note</span><span class="help-key"><kbd>⋮</kbd> → Add note</span></div>
+    </div>
+
+    <div class="help-section">
+      <div class="help-title">Keyboard Shortcuts</div>
+      <div class="help-row"><span class="help-desc">Undo</span><span class="help-key"><kbd>⌘Z</kbd></span></div>
+      <div class="help-row"><span class="help-desc">Redo</span><span class="help-key"><kbd>⌘⇧Z</kbd></span></div>
+      <div class="help-row"><span class="help-desc">Search</span><span class="help-key"><kbd>⌘F</kbd></span></div>
+      <div class="help-row"><span class="help-desc">Navigate nodes</span><span class="help-key"><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd></span></div>
+      <div class="help-row"><span class="help-desc">Add child (focused)</span><span class="help-key"><kbd>N</kbd></span></div>
+      <div class="help-row"><span class="help-desc">Rename (focused)</span><span class="help-key"><kbd>R</kbd></span></div>
+      <div class="help-row"><span class="help-desc">Delete (focused)</span><span class="help-key"><kbd>Del</kbd></span></div>
+      <div class="help-row"><span class="help-desc">Expand/collapse (focused)</span><span class="help-key"><kbd>Space</kbd></span></div>
+      <div class="help-row"><span class="help-desc">Exit focus / close</span><span class="help-key"><kbd>Esc</kbd></span></div>
+    </div>
+
+    <div class="help-section">
+      <div class="help-title">Toolbar</div>
+      <div class="help-row"><span class="help-desc">Depth filters</span><span class="help-key"><kbd>L1</kbd><kbd>L2</kbd><kbd>All</kbd></span></div>
+      <div class="help-row"><span class="help-desc">Edge style</span><span class="help-key">⌇ toolbar — Bezier / Ortho / Straight</span></div>
+      <div class="help-row"><span class="help-desc">Orientation</span><span class="help-key"><kbd>⋮</kbd> root → Pyramid / Horizontal</span></div>
+      <div class="help-row"><span class="help-desc">Re-theme tree</span><span class="help-key"><kbd>⋮</kbd> root → Re-theme</span></div>
+      <div class="help-row"><span class="help-desc">Dark / light mode</span><span class="help-key"><kbd>☀</kbd> toolbar</span></div>
+      <div class="help-row"><span class="help-desc">Export</span><span class="help-key">JSON · PNG · PDF</span></div>
+    </div>
+  </div>
+
+
+  <!-- Focus breadcrumb -->
+  <div id="focus-crumb"></div>
+
+  <!-- Minimap -->
+  <div id="minimap" title="Click to pan · Drag to navigate">
+    <canvas id="minimap-canvas" width="336" height="192"></canvas>
   </div>
 
   <!-- Canvas -->
@@ -562,24 +937,33 @@
     <div class="ctx-item" id="ctx-add"    onclick="ctxDoAdd()">   <span class="ctx-icon">＋</span> Add child node</div>
     <div class="ctx-item" id="ctx-rename" onclick="ctxDoRename()"><span class="ctx-icon">✎</span> Rename</div>
     <div class="ctx-item" id="ctx-note"   onclick="ctxDoNote()">  <span class="ctx-icon">✦</span> <span id="ctx-note-label">Add note</span></div>
+    <div class="ctx-item" id="ctx-focus"  onclick="ctxDoFocus()" style="display:none"><span class="ctx-icon">⊙</span> Focus subtree</div>
     <div class="ctx-item" id="ctx-color"  onclick="ctxDoColor()" style="display:none"><span class="ctx-icon">◉</span> Change color</div>
-    <div class="ctx-item" id="ctx-orient" onclick="ctxDoOrient()" style="display:none"><span class="ctx-icon">⊟</span> Pyramid layout</div>
+    <div class="ctx-item" id="ctx-orient"  onclick="ctxDoOrient()"  style="display:none"><span class="ctx-icon">⊟</span> Pyramid layout</div>
+    <div class="ctx-item" id="ctx-retheme" onclick="ctxDoReTheme()" style="display:none"><span class="ctx-icon">◈</span> Re-theme tree</div>
+    <div class="ctx-sep"></div>
+    <div class="ctx-item" id="ctx-status-priority"   onclick="ctxDoStatus('priority')">  <span class="ctx-icon"><span class="ctx-status-dot" style="background:#dc321e"></span></span> High Priority</div>
+    <div class="ctx-item" id="ctx-status-inprogress" onclick="ctxDoStatus('inprogress')"><span class="ctx-icon"><span class="ctx-status-dot" style="background:#0e64b4"></span></span> In Progress</div>
+    <div class="ctx-item" id="ctx-status-done"       onclick="ctxDoStatus('done')">      <span class="ctx-icon"><span class="ctx-status-dot" style="background:#1a9636"></span></span> Done</div>
+    <div class="ctx-item" id="ctx-status-clear"      onclick="ctxDoStatus(null)" style="display:none"><span class="ctx-icon">○</span> Clear status</div>
     <div class="ctx-sep"></div>
     <div class="ctx-item danger" id="ctx-delete" onclick="ctxDoDelete()"><span class="ctx-icon">✕</span> Delete node</div>
   </div>
 
-  <!-- Notes panel -->
-  <div id="note-overlay" onclick="if(event.target===this)closeNote()">
-    <div id="note-panel">
-      <div id="note-panel-title">Note</div>
-      <div id="note-panel-sub">For: <span id="note-node-label"></span></div>
-      <textarea id="note-textarea" placeholder="Capture longer thoughts, context, or evidence for this node…" oninput="updateNoteCount()"></textarea>
-      <div id="note-char-count"></div>
-      <div class="modal-btns" style="margin-top:12px">
-        <button class="mbtn cancel" id="note-clear-btn" onclick="clearNote()" style="margin-right:auto;color:#b03020">Remove note</button>
-        <button class="mbtn cancel" onclick="closeNote()">Cancel</button>
-        <button class="mbtn ok"     onclick="saveNote()">Save</button>
-      </div>
+  <!-- Terminal floating note panel -->
+  <div id="note-panel">
+    <div id="note-titlebar">
+      <div class="note-tl note-tl-close"  onclick="closeNote()" title="Close"></div>
+      <div class="note-tl note-tl-min"    onclick="toggleMinimizeNote()" title="Minimize"></div>
+      <div class="note-tl note-tl-expand" title="Resize from corner"></div>
+      <span id="note-title-text">📋 Note</span>
+    </div>
+    <textarea id="note-textarea" placeholder="Capture longer thoughts, context, or evidence for this node…" oninput="updateNoteCount()"></textarea>
+    <div id="note-panel-footer">
+      <span id="note-char-count"></span>
+      <button class="note-btn remove" id="note-clear-btn" onclick="clearNote()">✕ Remove</button>
+      <button class="note-btn cancel" onclick="closeNote()">Cancel</button>
+      <button class="note-btn save"   onclick="saveNote()">Save  ⌘↵</button>
     </div>
   </div>
 
@@ -597,6 +981,20 @@
   </div>
 
 </div><!-- /editor-view -->
+
+<!-- ══════════════════════════════════════════════
+     RE-THEME OVERLAY  (global, above editor)
+══════════════════════════════════════════════ -->
+<div id="retheme-overlay" style="position:fixed;inset:0;z-index:800;background:rgba(28,43,58,.18);display:none;align-items:center;justify-content:center" onclick="if(event.target===this)closeReTheme()">
+  <div style="background:var(--glass-bg);border-radius:18px;padding:22px 22px 18px;max-width:480px;width:94%;box-shadow:var(--shadow-lg),0 0 0 1px var(--border);animation:modalIn .18s cubic-bezier(.34,1.4,.64,1)">
+    <div style="font-family:var(--font-head);font-size:15px;color:var(--navy);margin-bottom:16px">Re-theme Tree</div>
+    <div id="retheme-grid" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px"></div>
+    <div class="modal-btns">
+      <button class="mbtn cancel" onclick="closeReTheme()">Cancel</button>
+      <button class="mbtn ok"     onclick="applyReTheme()">Apply Theme</button>
+    </div>
+  </div>
+</div>
 
 <!-- ══════════════════════════════════════════════
      NEW TREE MODAL  (always in DOM, above both views)
@@ -630,51 +1028,17 @@
         </div>
       </label>
       <label class="tpl-opt">
-        <input type="radio" name="tpl" value="vz"/>
+        <input type="radio" name="tpl" value="telecom"/>
         <div class="tpl-card">
-          <div class="tpl-card-title">VZ Telecom</div>
+          <div class="tpl-card-title">Telecom X</div>
           <div class="tpl-card-desc">Full performance levers</div>
         </div>
       </label>
     </div>
+    <div class="ntm-label">Font Style</div>
+    <div id="ntm-fonts"></div>
     <div class="ntm-label">Color Theme</div>
-    <div id="ntm-themes">
-      <label class="theme-opt">
-        <input type="radio" name="theme" value="classic" checked/>
-        <div class="theme-card">
-          <div class="theme-dots"><span style="background:#1c2b3a"></span><span style="background:#166638"></span><span style="background:#0e4d6c"></span><span style="background:#7d3512"></span></div>
-          <div class="theme-name">Classic</div>
-        </div>
-      </label>
-      <label class="theme-opt">
-        <input type="radio" name="theme" value="ocean"/>
-        <div class="theme-card">
-          <div class="theme-dots"><span style="background:#0a3352"></span><span style="background:#0e6e9c"></span><span style="background:#1a8a7a"></span><span style="background:#2e4fa3"></span></div>
-          <div class="theme-name">Ocean</div>
-        </div>
-      </label>
-      <label class="theme-opt">
-        <input type="radio" name="theme" value="sunset"/>
-        <div class="theme-card">
-          <div class="theme-dots"><span style="background:#3d1a0f"></span><span style="background:#b84422"></span><span style="background:#d4782a"></span><span style="background:#a33050"></span></div>
-          <div class="theme-name">Sunset</div>
-        </div>
-      </label>
-      <label class="theme-opt">
-        <input type="radio" name="theme" value="forest"/>
-        <div class="theme-card">
-          <div class="theme-dots"><span style="background:#1a3320"></span><span style="background:#2d6e3e"></span><span style="background:#5a8e3a"></span><span style="background:#1e6b55"></span></div>
-          <div class="theme-name">Forest</div>
-        </div>
-      </label>
-      <label class="theme-opt">
-        <input type="radio" name="theme" value="mono"/>
-        <div class="theme-card">
-          <div class="theme-dots"><span style="background:#1a1a1a"></span><span style="background:#3d3d3d"></span><span style="background:#5e5e5e"></span><span style="background:#7a7a7a"></span></div>
-          <div class="theme-name">Mono</div>
-        </div>
-      </label>
-    </div>
+    <div id="ntm-themes"><!-- populated by buildThemePicker() --></div>
     <div class="ntm-btns">
       <button class="mbtn cancel" onclick="hideNewTreeModal()">Cancel</button>
       <button class="mbtn ok"     onclick="confirmNewTree()">Create Tree →</button>
@@ -698,13 +1062,13 @@
 // DEFAULT TREE DATA
 // ════════════════════════════════════════════════
 const DEFAULT = {
-  id:'root', label:'VZ — Performance Levers', open:true, color:'#1c2b3a',
+  id:'root', label:'Telecom X — Performance Levers', open:true, color:'#1c2b3a',
   children:[
     { id:'pricing', label:'Pricing Levers', open:false, color:'#166638',
       children:[
         { id:'pr-level', label:'Price Level', open:false, children:[
           {id:'pl1',label:'Base plan price points'},
-          {id:'pl2',label:'Premium network tier pricing (5G UW surcharge)'},
+          {id:'pl2',label:'Premium network tier pricing (5G premium surcharge)'},
           {id:'pl3',label:'Prepaid vs. postpaid price gap'},
           {id:'pl4',label:'Legacy plan repricing / forced migration'},
           {id:'pl5',label:'International rates — roaming & day passes'},
@@ -864,7 +1228,7 @@ const DEFAULT = {
           {id:'cg3',label:'Shared services vs. outsourced BPO'},
         ]},
         { id:'co-vend', label:'Vendor & Procurement', open:false, children:[
-          {id:'cv1',label:'RAN vendor contracts (Ericsson, Nokia, Samsung)'},
+          {id:'cv1',label:'Primary RAN vendor contracts'},
           {id:'cv2',label:'Single vs. multi-vendor network strategy'},
           {id:'cv3',label:'Managed services — NOC & field ops outsourcing'},
           {id:'cv4',label:'Spend aggregation & procurement leverage'},
@@ -909,19 +1273,37 @@ const TEMPLATES = {
       {id:'t4',label:'External',  open:false, color:'#4a3580', children:[]},
     ]
   },
-  vz: null  // assigned below after DEFAULT is defined
+  telecom: null  // assigned below after DEFAULT is defined
 };
-TEMPLATES.vz = DEFAULT;
+TEMPLATES.telecom = DEFAULT;
 
 // ════════════════════════════════════════════════
 // COLOR THEMES
 // ════════════════════════════════════════════════
+// ── M3-aligned color themes (10 palettes) ──
+// Each has a dark root (white text) + 4 L1 branch colors.
+// Tones chosen from M3 tonal palette ranges (T10-T40) for accessibility.
 const COLOR_THEMES = {
-  classic: { root:'#1c2b3a', colors:['#166638','#0e4d6c','#7d3512','#4a3580'] },
-  ocean:   { root:'#0a3352', colors:['#0e6e9c','#1a8a7a','#2e4fa3','#4a8ab5'] },
-  sunset:  { root:'#3d1a0f', colors:['#b84422','#d4782a','#a33050','#7a2d5e'] },
-  forest:  { root:'#1a3320', colors:['#2d6e3e','#5a8e3a','#1e6b55','#4a7a2a'] },
-  mono:    { root:'#1a1a1a', colors:['#3d3d3d','#5e5e5e','#7a7a7a','#4a4a4a'] },
+  // ── Original 5 ──
+  classic: { name:'Classic',  root:'#1c2b3a', colors:['#166638','#0e4d6c','#7d3512','#4a3580'], dots:['#1c2b3a','#166638','#0e4d6c','#7d3512'] },
+  ocean:   { name:'Ocean',    root:'#0a3352', colors:['#0e6e9c','#1a8a7a','#2e4fa3','#4a8ab5'], dots:['#0a3352','#0e6e9c','#1a8a7a','#2e4fa3'] },
+  sunset:  { name:'Sunset',   root:'#3d1a0f', colors:['#b84422','#d4782a','#a33050','#7a2d5e'], dots:['#3d1a0f','#b84422','#d4782a','#a33050'] },
+  forest:  { name:'Forest',   root:'#1a3320', colors:['#2d6e3e','#5a8e3a','#1e6b55','#4a7a2a'], dots:['#1a3320','#2d6e3e','#5a8e3a','#1e6b55'] },
+  mono:    { name:'Mono',     root:'#1a1a1a', colors:['#3d3d3d','#5e5e5e','#2c2c2c','#4a4a4a'], dots:['#1a1a1a','#3d3d3d','#5e5e5e','#2c2c2c'] },
+  // ── M3-aligned new 5 ──
+  violet:  { name:'Violet',   root:'#21005d', colors:['#4a0f95','#5b21b6','#6d28d9','#7c3aed'], dots:['#21005d','#4a0f95','#5b21b6','#6d28d9'] },
+  rose:    { name:'Rose',     root:'#410002', colors:['#7f1d1d','#9b1b30','#be185d','#9d174d'], dots:['#410002','#7f1d1d','#9b1b30','#be185d'] },
+  amber:   { name:'Amber',    root:'#341100', colors:['#7c2d12','#92400e','#b45309','#a16207'], dots:['#341100','#7c2d12','#92400e','#b45309'] },
+  slate:   { name:'Slate',    root:'#0f172a', colors:['#1e3a5f','#1e40af','#0f4c81','#1d4ed8'], dots:['#0f172a','#1e3a5f','#1e40af','#0f4c81'] },
+  jade:    { name:'Jade',     root:'#022c22', colors:['#064e3b','#065f46','#047857','#0f5132'], dots:['#022c22','#064e3b','#065f46','#047857'] },
+};
+
+// ── Font pairings ──
+const FONT_PAIRS = {
+  editorial:  { name:'Editorial',  head:"'Libre Baskerville', serif",     body:"'Plus Jakarta Sans', sans-serif", sampleHead:'Libre Baskerville', sampleBody:'Plus Jakarta Sans', google: null },
+  modern:     { name:'Modern',     head:"'Outfit', sans-serif",           body:"'Inter', sans-serif",             sampleHead:'Outfit',             sampleBody:'Inter',             google:'family=Outfit:wght@600;700&family=Inter:wght@400;500;600;700' },
+  warm:       { name:'Warm',       head:"'Playfair Display', serif",      body:"'Nunito', sans-serif",            sampleHead:'Playfair Display',   sampleBody:'Nunito',            google:'family=Playfair+Display:wght@700&family=Nunito:wght@400;500;600;700' },
+  technical:  { name:'Technical',  head:"'Space Grotesk', sans-serif",    body:"'IBM Plex Sans', sans-serif",     sampleHead:'Space Grotesk',      sampleBody:'IBM Plex Sans',     google:'family=Space+Grotesk:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600' },
 };
 
 // ════════════════════════════════════════════════
@@ -978,6 +1360,32 @@ function escHtml(s) {
 }
 
 // ════════════════════════════════════════════════
+// THEME
+// ════════════════════════════════════════════════
+function initTheme() {
+  const saved = localStorage.getItem('it_theme');
+  const preferDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const dark = saved ? saved === 'dark' : preferDark;
+  applyThemeMode(dark);
+}
+function applyThemeMode(dark) {
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  const btn = document.getElementById('btn-theme');
+  if (btn) btn.textContent = dark ? '☽' : '☀';
+  localStorage.setItem('it_theme', dark ? 'dark' : 'light');
+}
+function toggleTheme() {
+  applyThemeMode(document.documentElement.dataset.theme !== 'dark');
+}
+function toggleHelp() {
+  const btn = document.getElementById('help-btn');
+  const panel = document.getElementById('help-panel');
+  const isOpen = panel.classList.contains('open');
+  panel.classList.toggle('open', !isOpen);
+  btn.classList.toggle('active', !isOpen);
+}
+
+// ════════════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════════════
 let tree           = null;
@@ -988,6 +1396,27 @@ let ctxTargetId    = null;
 let modalMode      = 'add';
 let searchActive   = false;
 let savedOpenState = null;
+
+// Undo / redo
+let undoStack = [], undoIdx = -1;
+
+// Search navigation
+let searchMatches = [], searchMatchIdx = -1;
+
+// Keyboard navigation
+let kbFocusId = null;
+
+// Drag-and-drop
+let dragState = { pending: null, active: false, ghost: null, targetId: null, insertMode: null, startX: 0, startY: 0 };
+
+// Focus-subtree mode
+let focusSubtreeId = null;
+
+// Edge style
+let edgeStyle = localStorage.getItem('it_edge') || 'bezier'; // 'bezier'|'ortho'|'straight'
+
+// Minimap helpers
+let minimapScale = 1, minimapOffX = 0, minimapOffY = 0, minimapLastPos = [];
 
 // ════════════════════════════════════════════════
 // ROUTER
@@ -1016,7 +1445,11 @@ function showView(v) {
   document.getElementById('editor-view').style.display = v === 'editor' ? 'block' : 'none';
 }
 
-function goHome() { window.location.hash = '#/'; }
+function goHome() {
+  // Reset to default font when returning home
+  applyFontPair('editorial');
+  window.location.hash = '#/';
+}
 
 // ════════════════════════════════════════════════
 // HOME SCREEN
@@ -1034,10 +1467,12 @@ function renderHome() {
 
   trees.forEach(t => {
     const n   = countNodes(t.data);
+    const rootColor = t.data?.color || '#1c2b3a';
     const div = document.createElement('div');
     div.className = 'tree-card';
     div.innerHTML = `
-      <div class="tree-card-name">${escHtml(t.name)}</div>
+      <div class="tree-card-accent" style="background:${rootColor}"></div>
+      <div class="tree-card-name" style="margin-top:6px">${escHtml(t.name)}</div>
       <div class="tree-card-meta">${n} node${n!==1?'s':''} &nbsp;·&nbsp; ${relTime(t.updatedAt)}</div>
       <button class="tree-card-btn" title="Options" onclick="showCardMenu(event,'${escHtml(t.id)}')">···</button>
     `;
@@ -1109,11 +1544,17 @@ function deleteTreeCard() {
 
 // New tree modal
 function showNewTreeModal() {
+  buildThemePicker();
+  buildFontPicker();
   document.getElementById('new-tree-overlay').style.display = 'flex';
   const inp = document.getElementById('ntm-name');
   inp.value = '';
   document.querySelector('input[name="tpl"][value="blank"]').checked = true;
-  document.querySelector('input[name="theme"][value="classic"]').checked = true;
+  // Set Classic theme & Editorial font as defaults
+  const classicRadio = document.querySelector('input[name="theme"][value="classic"]');
+  if (classicRadio) classicRadio.checked = true;
+  const editorialRadio = document.querySelector('input[name="fontpair"][value="editorial"]');
+  if (editorialRadio) editorialRadio.checked = true;
   setTimeout(() => inp.focus(), 60);
 }
 function hideNewTreeModal() {
@@ -1121,23 +1562,26 @@ function hideNewTreeModal() {
   if (window.location.hash === '#/new') history.replaceState(null, '', '#/');
 }
 function confirmNewTree() {
-  const name     = document.getElementById('ntm-name').value.trim() || 'Untitled Tree';
-  const tplKey   = document.querySelector('input[name="tpl"]:checked')?.value || 'blank';
-  const themeKey = document.querySelector('input[name="theme"]:checked')?.value || 'classic';
-  const tplData  = TEMPLATES[tplKey] || TEMPLATES.blank;
-  const newId    = genId();
-  const store    = loadStore();
-  const data     = clone(tplData);
-  // Sync root label to tree name for non-VZ templates
-  if (tplKey !== 'vz') data.label = name;
+  const name      = document.getElementById('ntm-name').value.trim() || 'Untitled Tree';
+  const tplKey    = document.querySelector('input[name="tpl"]:checked')?.value || 'blank';
+  const themeKey  = document.querySelector('input[name="theme"]:checked')?.value || 'classic';
+  const fontKey   = document.querySelector('input[name="fontpair"]:checked')?.value || 'editorial';
+  const tplData   = TEMPLATES[tplKey] || TEMPLATES.blank;
+  const newId     = genId();
+  const store     = loadStore();
+  const data      = clone(tplData);
+  // Sync root label to tree name for non-telecom templates
+  if (tplKey !== 'telecom') data.label = name;
   // Apply color theme
   const theme = COLOR_THEMES[themeKey] || COLOR_THEMES.classic;
-  data.color = theme.root;
+  data.color    = theme.root;
+  data.themeKey = themeKey;          // ← store so new L1 nodes inherit correctly
   if (data.children?.length) {
     data.children.forEach((child, i) => { child.color = theme.colors[i % theme.colors.length]; });
   }
   store.trees[newId] = {
     id: newId, name,
+    fontPair: fontKey,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     data
@@ -1166,8 +1610,18 @@ function openTree(id) {
   tree = clone(rec.data);
   store.activeId = id;
   saveStore(store);
+  // Reset undo history for fresh tree
+  undoStack = [JSON.stringify(tree)]; undoIdx = 0; updateUndoButtons();
+  // Reset focus mode
+  focusSubtreeId = null; kbFocusId = null;
 
   document.getElementById('tb-title').textContent = rec.name;
+  // Apply font pair for this tree
+  applyFontPair(rec.fontPair || 'editorial');
+  // Back-fill themeKey for old trees without one
+  if (!tree.themeKey) {
+    tree.themeKey = Object.keys(COLOR_THEMES).find(k => COLOR_THEMES[k].root === tree.color) || 'classic';
+  }
   clearSearch();
   render();
   setDepth(1);
@@ -1218,9 +1672,39 @@ function save() {
 }
 function clone(o) { return JSON.parse(JSON.stringify(o)); }
 
+// ════════════════════════════════════════════════
+// UNDO / REDO
+// ════════════════════════════════════════════════
+function pushHistory() {
+  if (!tree) return;
+  undoStack = undoStack.slice(0, undoIdx + 1);
+  undoStack.push(JSON.stringify(tree));
+  if (undoStack.length > 30) undoStack.shift();
+  undoIdx = undoStack.length - 1;
+  updateUndoButtons();
+}
+function undo() {
+  if (undoIdx <= 0) return;
+  undoIdx--;
+  tree = JSON.parse(undoStack[undoIdx]);
+  save(); render(); updateUndoButtons();
+}
+function redo() {
+  if (undoIdx >= undoStack.length - 1) return;
+  undoIdx++;
+  tree = JSON.parse(undoStack[undoIdx]);
+  save(); render(); updateUndoButtons();
+}
+function updateUndoButtons() {
+  const u = document.getElementById('btn-undo');
+  const r = document.getElementById('btn-redo');
+  if (u) u.style.opacity = undoIdx > 0 ? '1' : '.35';
+  if (r) r.style.opacity = undoIdx < undoStack.length-1 ? '1' : '.35';
+}
+
 function hardReset() {
   if (!currentTreeId) return;
-  if (!confirm('Reset this tree to the VZ default? All edits will be lost.')) return;
+  if (!confirm('Reset this tree to the Telecom X default? All edits will be lost.')) return;
   const store = loadStore();
   if (store.trees[currentTreeId]) {
     store.trees[currentTreeId].data      = clone(DEFAULT);
@@ -1372,17 +1856,54 @@ function onSearch(val) {
   document.getElementById('srch-clear').style.display = term ? 'block' : 'none';
   if (!term) { clearSearch(); return; }
   if (!searchActive) { savedOpenState = captureOpen(tree); expandAll(tree); searchActive = true; }
+  // Build ordered match list
+  searchMatches = [];
+  function collectMatches(n) {
+    if (n.label.toLowerCase().includes(term)) searchMatches.push(n.id);
+    for (const c of (n.children||[])) collectMatches(c);
+  }
+  collectMatches(tree);
+  searchMatchIdx = searchMatches.length ? 0 : -1;
+  updateSearchNav();
   render(term);
+  if (searchMatchIdx >= 0) scrollToNode(searchMatches[0]);
 }
 function clearSearch() {
   const inp = document.getElementById('search-input');
   if (inp) inp.value = '';
   const clr = document.getElementById('srch-clear');
   if (clr) clr.style.display = 'none';
+  document.getElementById('srch-nav').style.display = 'none';
   if (searchActive && savedOpenState) { restoreOpen(tree, savedOpenState); savedOpenState = null; }
   searchActive = false;
+  searchMatches = []; searchMatchIdx = -1;
   ['btn-l1','btn-l2','btn-all'].forEach(id => document.getElementById(id)?.classList.remove('on'));
   render();
+}
+function updateSearchNav() {
+  const nav = document.getElementById('srch-nav');
+  const cnt = document.getElementById('srch-count');
+  if (!searchMatches.length) { nav.style.display = 'none'; return; }
+  nav.style.display = 'flex';
+  cnt.textContent = (searchMatchIdx+1) + '/' + searchMatches.length;
+  document.getElementById('srch-prev').disabled = searchMatchIdx <= 0;
+  document.getElementById('srch-next').disabled = searchMatchIdx >= searchMatches.length-1;
+}
+function searchNext() {
+  if (searchMatchIdx < searchMatches.length-1) { searchMatchIdx++; updateSearchNav(); scrollToNode(searchMatches[searchMatchIdx]); }
+}
+function searchPrev() {
+  if (searchMatchIdx > 0) { searchMatchIdx--; updateSearchNav(); scrollToNode(searchMatches[searchMatchIdx]); }
+}
+function scrollToNode(id) {
+  // Find node element and pan viewport so it's centered
+  setTimeout(() => {
+    const el = document.querySelector(`.node[data-id="${id}"]`);
+    if (!el) return;
+    const x = parseFloat(el.style.left) + NW/2;
+    const y = parseFloat(el.style.top) + parseFloat(el.style.minHeight||'44')/2;
+    animateTo(window.innerWidth/2 - x*zoom, window.innerHeight/2 - y*zoom, zoom);
+  }, 30);
 }
 function captureOpen(n) {
   const s = {id:n.id, open:n.open, ch:{}};
@@ -1409,7 +1930,7 @@ function nodeH(n, depth) {
   const [charW, lh] = depth===0 ? [8.0,18] : depth===1 ? [7.5,17] : depth===2 ? [6.9,16] : [6.6,15];
   const charsPerLine = Math.max(1, Math.floor(innerW / charW));
   const lines   = Math.max(1, Math.ceil(label.length / charsPerLine));
-  const footerH = (n.children?.length || n.note) ? 26 : 0;
+  const footerH = (n.children?.length || n.note || n.status) ? 26 : 0;
   return Math.max(NH, lines * lh + 18 + footerH);
 }
 
@@ -1428,30 +1949,57 @@ function layout(n, x, midY, out, depth=0) {
   }
 }
 
-// Vertical (pyramid) layout — top-to-bottom
+// Vertical (pyramid) layout — top-to-bottom, depth-aligned rows
 function subW(n, depth=0) {
   const selfW = NW + HG_V;
   if (!n.open || !n.children?.length) return selfW;
   const childrenW = n.children.reduce((s,c) => s + subW(c, depth+1), 0);
   return Math.max(selfW, childrenW);
 }
-function layoutV(n, midX, y, out, depth=0) {
-  const nh = nodeH(n, depth);
-  out.push({n, x: midX - NW/2, y, depth, nh});
-  if (n.open && n.children?.length) {
-    const tot = n.children.reduce((s,c) => s + subW(c, depth+1), 0);
-    let cx = midX - tot/2;
-    for (const c of n.children) {
-      const w = subW(c, depth+1);
-      layoutV(c, cx + w/2, y + nh + VG_V, out, depth+1);
-      cx += w;
+function layoutV(root, out, startY=20) {
+  // Pass 1: collect X centres and depths for all visible nodes
+  const entries = [];
+  function collect(n, midX, depth) {
+    entries.push({n, midX, depth});
+    if (n.open && n.children?.length) {
+      const tot = n.children.reduce((s,c) => s + subW(c, depth+1), 0);
+      let cx = midX - tot/2;
+      for (const c of n.children) {
+        const w = subW(c, depth+1);
+        collect(c, cx + w/2, depth+1);
+        cx += w;
+      }
     }
+  }
+  const totalW = subW(root);
+  collect(root, totalW/2 + 20, 0);
+
+  // Pass 2: max-height per depth → uniform Y per level
+  const maxH = {};
+  for (const {n, depth} of entries) {
+    const nh = nodeH(n, depth);
+    maxH[depth] = Math.max(maxH[depth]||0, nh);
+  }
+  const yRow = {};
+  let curY = startY;
+  const maxDepth = entries.reduce((m,e) => Math.max(m, e.depth), 0);
+  for (let d = 0; d <= maxDepth; d++) {
+    yRow[d] = curY;
+    curY += (maxH[d]||NH) + VG_V;
+  }
+
+  // Pass 3: emit layout entries
+  for (const {n, midX, depth} of entries) {
+    const nh = nodeH(n, depth);
+    out.push({n, x: midX - NW/2, y: yRow[depth], depth, nh});
   }
 }
 
 // ════════════════════════════════════════════════
-// RENDER
+// RENDER  (with FLIP animation + animated edges)
 // ════════════════════════════════════════════════
+let prevEdgeKeys = new Set();
+
 function render(searchTerm='') {
   if (!tree) return;
   const isVertical = tree.orientation === 'vertical';
@@ -1460,12 +2008,22 @@ function render(searchTerm='') {
   const svg    = document.getElementById('svg-layer');
   const pos    = [];
 
+  // Focus-subtree mode: render only the focused subtree
+  const renderRoot = focusSubtreeId ? findNode(focusSubtreeId) || tree : tree;
+
+  // ── FLIP: capture existing node positions before rebuild ──
+  const snapBefore = new Map();
+  if (!searchTerm) {
+    canvas.querySelectorAll('.node[data-id]').forEach(el => {
+      snapBefore.set(el.dataset.id, { x: parseFloat(el.style.left)||0, y: parseFloat(el.style.top)||0 });
+    });
+  }
+
   if (isVertical) {
-    const totalW = subW(tree);
-    layoutV(tree, totalW/2 + 20, 20, pos);
+    layoutV(renderRoot, pos, 20);
   } else {
-    const totalH = subH(tree);
-    layout(tree, 0, totalH/2+20, pos);
+    const totalH = subH(renderRoot);
+    layout(renderRoot, 0, totalH/2+20, pos);
   }
 
   const W = pos.reduce((m,p) => Math.max(m, p.x+NW), 0) + 150;
@@ -1475,27 +2033,48 @@ function render(searchTerm='') {
 
   canvas.querySelectorAll('.node').forEach(e => e.remove());
 
-  // SVG edges
-  let paths = '';
+  // ── Animated SVG edges (DOM elements so we can getTotalLength) ──
+  const newEdgeKeys = new Set();
+  svg.innerHTML = '';
   for (const {n,x,y,nh} of pos) {
     if (!n.open || !n.children?.length) continue;
     for (const child of n.children) {
       const cp = pos.find(p => p.n===child); if (!cp) continue;
       const col = colors[child.id]||'#888';
+      const key = `${n.id}>${child.id}`;
+      newEdgeKeys.add(key);
+      const isNew = !prevEdgeKeys.has(key);
+      let d;
       if (isVertical) {
-        const px = x+NW/2, py = y+nh;
-        const cx = cp.x+NW/2, cy = cp.y;
-        const my = py + VG_V*0.48;
-        paths += `<path d="M${px},${py} C${px},${my} ${cx},${my} ${cx},${cy}" fill="none" stroke="${col}" stroke-width="1.5" opacity="0.22"/>`;
+        const px=x+NW/2, py=y+nh, cx=cp.x+NW/2, cy=cp.y, my=py+VG_V*.48;
+        if (edgeStyle==='straight') d = `M${px},${py} L${cx},${cy}`;
+        else if (edgeStyle==='ortho') d = `M${px},${py} V${my} H${cx} V${cy}`;
+        else d = `M${px},${py} C${px},${my} ${cx},${my} ${cx},${cy}`;
       } else {
-        const px=x+NW, py=y+nh/2;
-        const cx=cp.x, cy=cp.y+cp.nh/2;
-        const mx=px+HG*.48;
-        paths += `<path d="M${px},${py} C${mx},${py} ${mx},${cy} ${cx},${cy}" fill="none" stroke="${col}" stroke-width="1.5" opacity="0.22"/>`;
+        const px=x+NW, py=y+nh/2, cx=cp.x, cy=cp.y+cp.nh/2, mx=px+HG*.48;
+        if (edgeStyle==='straight') d = `M${px},${py} L${cx},${cy}`;
+        else if (edgeStyle==='ortho') d = `M${px},${py} H${mx} V${cy} H${cx}`;
+        else d = `M${px},${py} C${mx},${py} ${mx},${cy} ${cx},${cy}`;
+      }
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d', d);
+      path.setAttribute('fill','none');
+      path.setAttribute('stroke', col);
+      path.setAttribute('stroke-width','1.5');
+      path.setAttribute('opacity','0.22');
+      svg.appendChild(path);
+      if (isNew) {
+        const len = path.getTotalLength();
+        path.style.strokeDasharray  = len;
+        path.style.strokeDashoffset = len;
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          path.style.transition = 'stroke-dashoffset 280ms ease-out';
+          path.style.strokeDashoffset = '0';
+        }));
       }
     }
   }
-  svg.innerHTML = paths;
+  prevEdgeKeys = newEdgeKeys;
 
   // Match ids for search
   const matchIds = new Set();
@@ -1517,13 +2096,13 @@ function render(searchTerm='') {
       el.style.background  = col;
       el.style.boxShadow   = `0 2px 14px ${col}38`;
     } else if (depth===2) {
-      el.style.background  = '#fff';
-      el.style.border      = `1px solid #e2ddd6`;
+      el.style.background  = 'var(--node-bg-2)';
+      el.style.border      = '1px solid var(--node-bdr-2)';
       el.style.borderLeft  = `4px solid ${col}`;
-      el.style.boxShadow   = '0 1px 6px rgba(28,43,58,.07)';
+      el.style.boxShadow   = 'var(--shadow-sm)';
     } else {
-      el.style.background  = 'var(--surface)';
-      el.style.border      = `1px solid #e6e1d8`;
+      el.style.background  = 'var(--node-bg-3)';
+      el.style.border      = '1px solid var(--node-bdr-3)';
       el.style.borderLeft  = `3px solid ${col}`;
     }
 
@@ -1539,14 +2118,17 @@ function render(searchTerm='') {
     // Menu button SVG (vertical 3-dots)
     const menuSvg = `<svg viewBox="0 0 4 16" width="3" height="13" fill="currentColor" style="pointer-events:none"><circle cx="2" cy="2" r="1.5"/><circle cx="2" cy="8" r="1.5"/><circle cx="2" cy="14" r="1.5"/></svg>`;
 
-    // Footer (chevron + count on right, note icon on left)
-    const hasFooter = !!(hasKids || n.note);
+    // Footer (chevron + count on right, note icon on left, status pill)
+    const STATUS_META = { priority:{label:'Priority',cls:'s-priority'}, inprogress:{label:'In Progress',cls:'s-inprogress'}, done:{label:'Done',cls:'s-done'} };
+    const hasFooter = !!(hasKids || n.note || n.status);
     const badge     = (!n.open && hasKids) ? `<span class="node-count">${n.children.length}</span>` : '';
     const chevron   = hasKids ? `<span class="node-chevron${n.open?' open':''}">▶</span>` : '';
     const noteIconSvg = `<svg viewBox="0 0 14 14" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.3" style="pointer-events:none"><rect x="1.5" y="1" width="11" height="12" rx="2"/><line x1="4" y1="4.5" x2="10" y2="4.5"/><line x1="4" y1="7" x2="10" y2="7"/><line x1="4" y1="9.5" x2="7.5" y2="9.5"/></svg>`;
     const noteBtn   = n.note ? `<button class="node-note-icon" title="${escHtml((n.note||'').slice(0,80))}" style="color:${txtCol}">${noteIconSvg}</button>` : '';
+    const sMeta     = n.status ? STATUS_META[n.status] : null;
+    const statusPill = sMeta ? `<span class="status-pill ${sMeta.cls}${isDark?' light':''}">${sMeta.label}</span>` : '';
     const footerHTML = hasFooter
-      ? `<div class="node-footer${isDark?' footer-light':''}" style="color:${txtCol}">${noteBtn}<span class="node-footer-gap"></span>${badge}${chevron}</div>`
+      ? `<div class="node-footer${isDark?' footer-light':''}" style="color:${txtCol}">${noteBtn}${statusPill}<span class="node-footer-gap"></span>${badge}${chevron}</div>`
       : '';
 
     el.innerHTML = `<div class="node-header">
@@ -1555,17 +2137,33 @@ function render(searchTerm='') {
     </div>${footerHTML}`;
 
     let clickTimer = null;
+    el.addEventListener('mousedown', e => {
+      // Begin potential drag (on header, not menu/note btns)
+      if (e.target.closest('.node-menu-btn') || e.target.closest('.node-note-icon')) return;
+      if (e.button !== 0) return;
+      dragState.pending = n.id;
+      dragState.startX = e.clientX; dragState.startY = e.clientY;
+      dragState.depth = depth;
+    });
     if (hasKids) {
       el.addEventListener('click', e => {
-        if (e.defaultPrevented) return;
+        if (e.defaultPrevented || dragState.active) return;
         clearTimeout(clickTimer);
-        clickTimer = setTimeout(() => toggle(n.id), 220);
+        clickTimer = setTimeout(() => { kbFocusId = n.id; toggle(n.id); }, 220);
+      });
+    } else {
+      el.addEventListener('click', e => {
+        if (e.defaultPrevented || dragState.active) return;
+        kbFocusId = n.id;
+        // Refresh focus ring without full render
+        document.querySelectorAll('.node.kb-focus').forEach(x => x.classList.remove('kb-focus'));
+        el.classList.add('kb-focus');
       });
     }
     el.addEventListener('dblclick', e => {
       e.preventDefault();
       clearTimeout(clickTimer);
-      startRename(n.id);
+      if (!dragState.active) startRename(n.id);
     });
     el.querySelector('.node-menu-btn').addEventListener('click', e => {
       e.stopPropagation();
@@ -1578,8 +2176,35 @@ function render(searchTerm='') {
       openNote(n.id);
     });
 
+    // Apply kb focus ring
+    if (n.id === kbFocusId) el.classList.add('kb-focus');
+
     canvas.appendChild(el);
   }
+
+  // ── FLIP: Play — animate nodes from their old positions ──
+  if (!searchTerm && snapBefore.size) {
+    canvas.querySelectorAll('.node[data-id]').forEach(el => {
+      const prev = snapBefore.get(el.dataset.id);
+      if (!prev) return;
+      const nx = parseFloat(el.style.left)||0;
+      const ny = parseFloat(el.style.top)||0;
+      const dx = prev.x - nx, dy = prev.y - ny;
+      if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
+      // Invert: jump to old position instantly, then spring to new
+      el.style.transition = 'none';
+      el.style.transform  = `translate(${dx}px,${dy}px)`;
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        el.style.transition = 'transform 300ms cubic-bezier(0.34,1.1,0.64,1)';
+        el.style.transform  = '';
+        el.addEventListener('transitionend', () => { el.style.transition = ''; }, { once: true });
+      }));
+    });
+  }
+
+  minimapLastPos = pos;
+  drawMinimap();
+  updateFocusBreadcrumb();
 }
 
 // ════════════════════════════════════════════════
@@ -1592,8 +2217,15 @@ function showCtxMenu(id, x, y, depth=99) {
   const isL1node = depth === 1;
   document.getElementById('ctx-delete').classList.toggle('disabled', !isCustom);
   document.getElementById('ctx-color').style.display  = (isRoot || isL1node) ? 'flex' : 'none';
-  const hasNote = !!(findNode(id)?.note);
+  const n = findNode(id);
+  const hasNote = !!(n?.note);
   document.getElementById('ctx-note-label').textContent = hasNote ? 'Edit note' : 'Add note';
+  // Focus subtree: show for non-root nodes with children
+  document.getElementById('ctx-focus').style.display = (!isRoot && n?.children?.length) ? 'flex' : 'none';
+  // Re-theme: only for root
+  document.getElementById('ctx-retheme').style.display = isRoot ? 'flex' : 'none';
+  // Status clear: show only if status is set
+  document.getElementById('ctx-status-clear').style.display = n?.status ? 'flex' : 'none';
   const orientEl = document.getElementById('ctx-orient');
   orientEl.style.display = isRoot ? 'flex' : 'none';
   if (isRoot) {
@@ -1621,7 +2253,7 @@ function ctxDoColor() {
   picker.style.cssText='position:fixed;opacity:0;pointer-events:none;top:0;left:0;';
   document.body.appendChild(picker);
   picker.addEventListener('input',  e => { n.color=e.target.value; render(); });
-  picker.addEventListener('change', e => { n.color=e.target.value; save(); render(); picker.remove(); });
+  picker.addEventListener('change', e => { pushHistory(); n.color=e.target.value; save(); render(); picker.remove(); });
   picker.addEventListener('blur', () => picker.remove());
   picker.click();
 }
@@ -1630,6 +2262,7 @@ function ctxDoDelete() {
   if (!id.startsWith('u_')) return;
   const n=findNode(id); if(!n) return;
   if (!confirm('Delete "' + n.label + '"?')) return;
+  pushHistory();
   const parent=findParent(id);
   if (parent) parent.children=parent.children.filter(c=>c.id!==id);
   save(); render();
@@ -1637,10 +2270,450 @@ function ctxDoDelete() {
 function ctxDoOrient() {
   hideCtxMenu();
   if (!tree) return;
+  pushHistory();
   tree.orientation = tree.orientation === 'vertical' ? 'horizontal' : 'vertical';
   save(); render(); fitView();
 }
 function ctxDoNote() { const id=ctxTargetId; hideCtxMenu(); openNote(id); }
+function ctxDoFocus() {
+  const id=ctxTargetId; hideCtxMenu();
+  focusSubtreeId = (focusSubtreeId === id) ? null : id;
+  render(); fitView();
+}
+function ctxDoStatus(val) {
+  const id=ctxTargetId; hideCtxMenu();
+  const n=findNode(id); if(!n) return;
+  pushHistory();
+  n.status = val || undefined;
+  save(); render();
+}
+
+// Re-theme current tree — uses dedicated #retheme-overlay
+function ctxDoReTheme() {
+  hideCtxMenu();
+  const grid = document.getElementById('retheme-grid');
+  grid.innerHTML = '';
+  Object.entries(COLOR_THEMES).forEach(([key, t]) => {
+    const lbl = document.createElement('label');
+    lbl.className = 'theme-opt';
+    lbl.innerHTML = `<input type="radio" name="retheme" value="${key}"/>
+      <div class="theme-card">
+        <div class="theme-dots">${t.dots.map(d=>`<span style="background:${d}"></span>`).join('')}</div>
+        <div class="theme-name">${t.name}</div>
+      </div>`;
+    grid.appendChild(lbl);
+  });
+  // Pre-select current theme
+  const cur = Object.entries(COLOR_THEMES).find(([,t]) => t.root === tree?.color)?.[0] || 'classic';
+  const radio = grid.querySelector(`input[value="${cur}"]`);
+  if (radio) radio.checked = true;
+  document.getElementById('retheme-overlay').style.display = 'flex';
+}
+function closeReTheme() { document.getElementById('retheme-overlay').style.display = 'none'; }
+function applyReTheme() {
+  const key = document.querySelector('input[name="retheme"]:checked')?.value;
+  closeReTheme();
+  if (!key || !COLOR_THEMES[key] || !tree) return;
+  pushHistory();
+  const theme = COLOR_THEMES[key];
+  tree.color    = theme.root;
+  tree.themeKey = key;               // ← persist for future L1 adds
+  if (tree.children?.length) {
+    tree.children.forEach((child, i) => { child.color = theme.colors[i % theme.colors.length]; });
+  }
+  save(); render();
+}
+
+// ── Theme-aware helpers ──
+// Detect theme key: use stored value first, fall back to matching root color
+function detectThemeKey() {
+  if (!tree) return 'classic';
+  if (tree.themeKey && COLOR_THEMES[tree.themeKey]) return tree.themeKey;
+  return Object.keys(COLOR_THEMES).find(k => COLOR_THEMES[k].root === tree.color) || 'classic';
+}
+// Return the appropriate theme color for a node at a given L1 index
+function themeColorAt(idx) {
+  const theme = COLOR_THEMES[detectThemeKey()] || COLOR_THEMES.classic;
+  return theme.colors[idx % theme.colors.length];
+}
+
+// ════════════════════════════════════════════════
+// FONT PAIRING
+// ════════════════════════════════════════════════
+let loadedFontPairs = new Set(['editorial']);
+function applyFontPair(key) {
+  const pair = FONT_PAIRS[key]; if (!pair) return;
+  // Load Google Font if needed
+  if (pair.google && !loadedFontPairs.has(key)) {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = `https://fonts.googleapis.com/css2?${pair.google}&display=swap`;
+    document.head.appendChild(link);
+    loadedFontPairs.add(key);
+  }
+  document.documentElement.style.setProperty('--font-head', pair.head);
+  document.documentElement.style.setProperty('--font-body', pair.body);
+}
+
+// ════════════════════════════════════════════════
+// PICKER BUILDERS (run on DOMContentLoaded)
+// ════════════════════════════════════════════════
+function buildThemePicker() {
+  const container = document.getElementById('ntm-themes');
+  if (!container) return;
+  container.innerHTML = '';
+  Object.entries(COLOR_THEMES).forEach(([key, t], i) => {
+    const lbl = document.createElement('label');
+    lbl.className = 'theme-opt';
+    lbl.innerHTML = `<input type="radio" name="theme" value="${key}"${i===0?' checked':''}/>
+      <div class="theme-card">
+        <div class="theme-dots">${t.dots.map(d=>`<span style="background:${d}"></span>`).join('')}</div>
+        <div class="theme-name">${t.name}</div>
+      </div>`;
+    container.appendChild(lbl);
+  });
+}
+function buildFontPicker() {
+  const container = document.getElementById('ntm-fonts');
+  if (!container) return;
+  container.innerHTML = '';
+  Object.entries(FONT_PAIRS).forEach(([key, p], i) => {
+    const lbl = document.createElement('label');
+    lbl.className = 'font-opt';
+    lbl.innerHTML = `<input type="radio" name="fontpair" value="${key}"${i===0?' checked':''}/>
+      <div class="font-card">
+        <div class="font-card-sample" style="font-family:${p.head}">Aa</div>
+        <div class="font-card-label">${p.name}</div>
+      </div>`;
+    container.appendChild(lbl);
+  });
+}
+
+// ════════════════════════════════════════════════
+// BACKUP / RESTORE ALL TREES
+// ════════════════════════════════════════════════
+function exportAllTrees() {
+  const store = loadStore();
+  const count = Object.keys(store.trees).length;
+  if (!count) { alert('No trees to backup.'); return; }
+  const date = new Date().toISOString().slice(0,10);
+  const blob = new Blob([JSON.stringify(store, null, 2)], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `issuetree-backup-${date}.json`;
+  a.click(); URL.revokeObjectURL(url);
+}
+function importAllTrees(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const store = JSON.parse(e.target.result);
+      if (!store.trees || typeof store.trees !== 'object') throw new Error('Invalid backup format.');
+      const count = Object.keys(store.trees).length;
+      if (!confirm(`Restore ${count} tree${count!==1?'s':''} from backup? This will MERGE with existing trees (existing IDs kept).`)) return;
+      const current = loadStore();
+      // Merge: new backup trees are added; existing IDs are NOT overwritten
+      Object.entries(store.trees).forEach(([id, t]) => {
+        if (!current.trees[id]) current.trees[id] = t;
+      });
+      saveStore(current);
+      renderHome();
+      alert(`Restored ${count} tree${count!==1?'s':''} successfully.`);
+    } catch(err) { alert('Could not restore: ' + err.message); }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+// ════════════════════════════════════════════════
+// FOCUS SUBTREE
+// ════════════════════════════════════════════════
+function getAncestors(id, n=tree, path=[]) {
+  if (!n) return null;
+  if (n.id === id) return [...path, n];
+  for (const c of (n.children||[])) {
+    const res = getAncestors(id, c, [...path, n]);
+    if (res) return res;
+  }
+  return null;
+}
+function updateFocusBreadcrumb() {
+  const el = document.getElementById('focus-crumb');
+  if (!el) return;
+  if (!focusSubtreeId) { el.style.display = 'none'; return; }
+  const ancestors = getAncestors(focusSubtreeId) || [];
+  const crumbs = ancestors.map((n,i) => {
+    const isLast = i === ancestors.length - 1;
+    const label = escHtml(n.label.length > 22 ? n.label.slice(0,20)+'…' : n.label);
+    if (isLast) return `<strong>${label}</strong>`;
+    return `<span class="crumb-item" onclick="focusTo('${n.id}')">${label}</span>`;
+  }).join('<span class="crumb-sep"> › </span>');
+  el.innerHTML = crumbs + `<button id="btn-focus-exit" onclick="exitFocus()">✕ Exit focus</button>`;
+  el.style.display = 'flex';
+}
+function focusTo(id) {
+  focusSubtreeId = (id === tree?.id) ? null : id;
+  render(); if (focusSubtreeId) fitView();
+}
+function exitFocus() {
+  focusSubtreeId = null;
+  render();
+}
+
+// ════════════════════════════════════════════════
+// MINIMAP
+// ════════════════════════════════════════════════
+function drawMinimap() {
+  const mc = document.getElementById('minimap-canvas');
+  if (!mc || !minimapLastPos.length) return;
+  const DPR = window.devicePixelRatio || 1;
+  const W = 168, H = 96;
+  mc.width  = W * DPR; mc.height = H * DPR;
+  const ctx = mc.getContext('2d');
+  ctx.scale(DPR, DPR);
+  ctx.clearRect(0, 0, W, H);
+
+  const pos = minimapLastPos;
+  const pad = 8;
+  const x0 = pos.reduce((m,p) => Math.min(m,p.x), Infinity)  - pad;
+  const y0 = pos.reduce((m,p) => Math.min(m,p.y), Infinity)  - pad;
+  const x1 = pos.reduce((m,p) => Math.max(m,p.x+NW), -Infinity) + pad;
+  const y1 = pos.reduce((m,p) => Math.max(m,p.y+p.nh), -Infinity) + pad;
+  const scale = Math.min(W/(x1-x0), H/(y1-y0), 1);
+  minimapScale = scale; minimapOffX = x0; minimapOffY = y0;
+
+  const colors = buildColorMap(tree);
+  for (const {n, x, y, nh, depth} of pos) {
+    const col = colors[n.id] || '#888';
+    const rx = (x-x0)*scale, ry = (y-y0)*scale;
+    const rw = Math.max(3, NW*scale), rh = Math.max(2, nh*scale);
+    ctx.globalAlpha = depth <= 1 ? 0.88 : 0.45;
+    ctx.fillStyle = depth <= 1 ? col : (document.documentElement.dataset.theme==='dark' ? '#666' : '#bbb');
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(rx, ry, rw, rh, 2) : ctx.rect(rx, ry, rw, rh);
+    ctx.fill();
+  }
+  // Viewport rect
+  ctx.globalAlpha = 1;
+  const vx = (-pan.x/zoom - x0) * scale;
+  const vy = (-pan.y/zoom - y0) * scale;
+  const vw2 = (window.innerWidth/zoom)  * scale;
+  const vh2 = (window.innerHeight/zoom) * scale;
+  ctx.strokeStyle = '#3b82f6';
+  ctx.lineWidth = 1.5;
+  ctx.globalAlpha = 0.85;
+  ctx.beginPath();
+  ctx.rect(vx, vy, vw2, vh2);
+  ctx.stroke();
+}
+
+// Minimap click/drag to pan
+(function() {
+  let mmDrag = false;
+  const mm = document.getElementById('minimap');
+  if (!mm) return;
+  function mmPan(e) {
+    const r = mm.getBoundingClientRect();
+    const mx = (e.clientX - r.left) / 168;
+    const my = (e.clientY - r.top)  / 96;
+    // Canvas-space center point
+    const cx = minimapOffX + mx / minimapScale;
+    const cy = minimapOffY + my / minimapScale;
+    pan.x = window.innerWidth/2  - cx * zoom;
+    pan.y = window.innerHeight/2 - cy * zoom;
+    applyTransform(); drawMinimap();
+  }
+  mm.addEventListener('mousedown', e => { mmDrag=true; mmPan(e); e.preventDefault(); });
+  window.addEventListener('mousemove', e => { if (mmDrag) mmPan(e); });
+  window.addEventListener('mouseup',   () => { mmDrag=false; });
+})();
+
+// ════════════════════════════════════════════════
+// EDGE STYLE
+// ════════════════════════════════════════════════
+const EDGE_LABELS = { bezier:'⌇ Bezier', ortho:'⌐ Ortho', straight:'╱ Straight' };
+const EDGE_ORDER  = ['bezier','ortho','straight'];
+function cycleEdgeStyle() {
+  const idx = EDGE_ORDER.indexOf(edgeStyle);
+  edgeStyle = EDGE_ORDER[(idx+1) % EDGE_ORDER.length];
+  localStorage.setItem('it_edge', edgeStyle);
+  const btn = document.getElementById('edge-style-btn');
+  if (btn) btn.textContent = EDGE_LABELS[edgeStyle];
+  prevEdgeKeys = new Set(); // force re-animate
+  render();
+}
+
+// ════════════════════════════════════════════════
+// KEYBOARD NAVIGATION
+// ════════════════════════════════════════════════
+function getSiblings(id) {
+  const parent = findParent(id);
+  return parent ? (parent.children||[]) : (tree?.id===id ? [] : []);
+}
+function kbMove(dir) {
+  if (!kbFocusId || !tree) return;
+  const n = findNode(kbFocusId);
+  if (!n) return;
+  let nextId = null;
+  if (dir === 'right') {
+    if (n.children?.length) { if (!n.open) { n.open=true; save(); render(); } nextId = n.children[0].id; }
+  } else if (dir === 'left') {
+    if (n.open && n.children?.length) { n.open=false; save(); render(); nextId = n.id; }
+    else { const p=findParent(n.id); if(p) nextId=p.id; }
+  } else if (dir === 'up' || dir === 'down') {
+    const sibs = getSiblings(n.id);
+    const idx = sibs.findIndex(s=>s.id===n.id);
+    if (dir==='up'  && idx>0)            nextId=sibs[idx-1].id;
+    if (dir==='down'&& idx<sibs.length-1) nextId=sibs[idx+1].id;
+  }
+  if (nextId) {
+    kbFocusId = nextId;
+    document.querySelectorAll('.node.kb-focus').forEach(x=>x.classList.remove('kb-focus'));
+    const el = document.querySelector(`.node[data-id="${nextId}"]`);
+    if (el) { el.classList.add('kb-focus'); scrollToNode(nextId); }
+  }
+}
+
+// ════════════════════════════════════════════════
+// DRAG-AND-DROP
+// ════════════════════════════════════════════════
+function getDescendantIds(id) {
+  const ids = new Set([id]);
+  function walk(n) { ids.add(n.id); for (const c of (n.children||[])) walk(c); }
+  const node = findNode(id); if (node) { for (const c of (node.children||[])) walk(c); }
+  return ids;
+}
+function isDescendant(ancestorId, checkId) {
+  return getDescendantIds(ancestorId).has(checkId);
+}
+
+(function initDrag() {
+  let dropLineEl = null;
+
+  function createGhost(nodeEl) {
+    const g = nodeEl.cloneNode(true);
+    g.className = 'drag-ghost';
+    g.style.width  = NW + 'px';
+    g.style.minHeight = nodeEl.style.minHeight;
+    g.style.position = 'fixed';
+    g.style.zIndex   = '9999';
+    document.body.appendChild(g);
+    return g;
+  }
+  function removeGhost() {
+    if (dragState.ghost) { dragState.ghost.remove(); dragState.ghost = null; }
+  }
+  function removeDropLine() {
+    if (dropLineEl) { dropLineEl.remove(); dropLineEl = null; }
+  }
+  function clearDropHighlight() {
+    document.querySelectorAll('.node.drop-over').forEach(x=>x.classList.remove('drop-over'));
+    removeDropLine();
+  }
+
+  window.addEventListener('mousemove', e => {
+    if (!dragState.pending && !dragState.active) return;
+    const dx = e.clientX - dragState.startX, dy = e.clientY - dragState.startY;
+
+    if (!dragState.active && dragState.pending) {
+      if (Math.abs(dx)>5 || Math.abs(dy)>5) {
+        dragState.active = true;
+        const srcEl = document.querySelector(`.node[data-id="${dragState.pending}"]`);
+        if (srcEl) dragState.ghost = createGhost(srcEl);
+        document.body.style.userSelect = 'none';
+      }
+    }
+    if (!dragState.active) return;
+
+    // Move ghost
+    if (dragState.ghost) {
+      dragState.ghost.style.left = (e.clientX - NW/2) + 'px';
+      dragState.ghost.style.top  = (e.clientY - 20) + 'px';
+    }
+
+    // Find drop target
+    const underEls = document.elementsFromPoint(e.clientX, e.clientY);
+    const targetEl  = underEls.find(el => el.classList.contains('node') && el.dataset.id && el.dataset.id !== dragState.pending);
+    clearDropHighlight();
+
+    if (!targetEl) { dragState.targetId=null; dragState.insertMode=null; return; }
+    const tid = targetEl.dataset.id;
+    if (isDescendant(dragState.pending, tid)) { dragState.targetId=null; return; }
+
+    const rect = targetEl.getBoundingClientRect();
+    const relY = (e.clientY - rect.top) / rect.height;
+    const dragParent = findParent(dragState.pending);
+    const targetParent = findParent(tid);
+
+    // If same parent: reorder (show insert line)
+    if (dragParent && targetParent && dragParent.id === targetParent.id) {
+      if (relY < 0.5) {
+        dragState.insertMode = 'before';
+        // Drop line above target
+        if (!dropLineEl) { dropLineEl=document.createElement('div'); dropLineEl.className='drop-line'; document.getElementById('canvas').appendChild(dropLineEl); }
+        dropLineEl.style.left  = (parseFloat(targetEl.style.left)-2) + 'px';
+        dropLineEl.style.width = (NW+4) + 'px';
+        dropLineEl.style.top   = (parseFloat(targetEl.style.top)-2) + 'px';
+      } else {
+        dragState.insertMode = 'after';
+        if (!dropLineEl) { dropLineEl=document.createElement('div'); dropLineEl.className='drop-line'; document.getElementById('canvas').appendChild(dropLineEl); }
+        dropLineEl.style.left  = (parseFloat(targetEl.style.left)-2) + 'px';
+        dropLineEl.style.width = (NW+4) + 'px';
+        dropLineEl.style.top   = (parseFloat(targetEl.style.top)+parseFloat(targetEl.style.minHeight||'44')+1) + 'px';
+      }
+    } else {
+      dragState.insertMode = 'append';
+      targetEl.classList.add('drop-over');
+    }
+    dragState.targetId = tid;
+  });
+
+  window.addEventListener('mouseup', e => {
+    if (!dragState.active) { dragState.pending=null; return; }
+    const srcId = dragState.pending;
+    const tgtId = dragState.targetId;
+    const mode  = dragState.insertMode;
+
+    removeGhost(); clearDropHighlight();
+    document.body.style.userSelect = '';
+    dragState = { pending:null, active:false, ghost:null, targetId:null, insertMode:null, startX:0, startY:0 };
+
+    if (!srcId || !tgtId || !tree) return;
+    const srcNode    = findNode(srcId); if (!srcNode) return;
+    const srcParent  = findParent(srcId); if (!srcParent) return; // can't move root
+    const tgtNode    = findNode(tgtId); if (!tgtNode) return;
+    const tgtParent  = findParent(tgtId);
+
+    pushHistory();
+
+    // Remove from current parent
+    srcParent.children = srcParent.children.filter(c=>c.id!==srcId);
+
+    if (mode === 'append') {
+      // Add as last child of tgtNode
+      if (!tgtNode.children) tgtNode.children = [];
+      tgtNode.children.push(srcNode);
+      tgtNode.open = true;
+    } else if (mode === 'before' || mode === 'after') {
+      // Insert into tgtParent relative to tgtNode
+      const sibs = tgtParent ? tgtParent.children : (tree.children||[]);
+      const idx = sibs.findIndex(s=>s.id===tgtId);
+      const insertIdx = mode==='after' ? idx+1 : idx;
+      sibs.splice(insertIdx, 0, srcNode);
+    }
+
+    // If node moved to L1 position, assign correct theme color for its new slot
+    const newParentIsRoot = (mode === 'append' && tgtNode.id === tree?.id) ||
+                            ((mode === 'before' || mode === 'after') && tgtParent?.id === tree?.id);
+    if (newParentIsRoot && tree) {
+      const newIdx = (tree.children||[]).indexOf(srcNode);
+      if (newIdx >= 0) srcNode.color = themeColorAt(newIdx);
+    }
+
+    save(); render();
+  });
+})();
 
 // ════════════════════════════════════════════════
 // NOTES
@@ -1649,32 +2722,64 @@ let noteTargetId = null;
 function openNote(id) {
   noteTargetId = id;
   const n = findNode(id); if (!n) return;
-  document.getElementById('note-node-label').textContent = n.label;
+  document.getElementById('note-title-text').textContent = '📋 ' + n.label;
   document.getElementById('note-textarea').value = n.note || '';
-  document.getElementById('note-clear-btn').style.display = n.note ? 'inline-flex' : 'none';
+  document.getElementById('note-clear-btn').style.display = n.note ? '' : 'none';
+  const panel = document.getElementById('note-panel');
+  panel.classList.remove('minimized');
   updateNoteCount();
-  document.getElementById('note-overlay').style.display = 'flex';
+  panel.style.display = 'flex';
   setTimeout(() => document.getElementById('note-textarea').focus(), 60);
 }
 function closeNote() {
-  document.getElementById('note-overlay').style.display = 'none';
+  document.getElementById('note-panel').style.display = 'none';
   noteTargetId = null;
+}
+function toggleMinimizeNote() {
+  document.getElementById('note-panel').classList.toggle('minimized');
 }
 function saveNote() {
   const v = document.getElementById('note-textarea').value.trim();
   const n = findNode(noteTargetId); if (!n) return;
+  pushHistory();
   n.note = v || undefined;
-  save(); render(); closeNote();
+  save(); render();
+  // Keep panel open but update title to reflect save state
+  document.getElementById('note-clear-btn').style.display = n.note ? '' : 'none';
 }
 function clearNote() {
   const n = findNode(noteTargetId); if (!n) return;
+  pushHistory();
   n.note = undefined;
   save(); render(); closeNote();
 }
 function updateNoteCount() {
   const len = document.getElementById('note-textarea').value.length;
-  document.getElementById('note-char-count').textContent = len > 0 ? `${len} characters` : '';
+  document.getElementById('note-char-count').textContent = len > 0 ? `${len} chars` : '';
 }
+
+// Note panel drag
+(function() {
+  let dragging = false, dx = 0, dy = 0;
+  const titlebar = document.getElementById('note-titlebar');
+  titlebar.addEventListener('mousedown', e => {
+    if (e.target.classList.contains('note-tl')) return;
+    const p = document.getElementById('note-panel');
+    const r = p.getBoundingClientRect();
+    // Convert to left/top if using right/bottom
+    p.style.right = 'auto'; p.style.bottom = 'auto';
+    p.style.left = r.left + 'px'; p.style.top = r.top + 'px';
+    dragging = true; dx = e.clientX - r.left; dy = e.clientY - r.top;
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const p = document.getElementById('note-panel');
+    p.style.left = Math.max(0, Math.min(window.innerWidth  - 80, e.clientX - dx)) + 'px';
+    p.style.top  = Math.max(0, Math.min(window.innerHeight - 40, e.clientY - dy)) + 'px';
+  });
+  window.addEventListener('mouseup', () => { dragging = false; });
+})();
 
 // ════════════════════════════════════════════════
 // ADD / RENAME MODAL
@@ -1707,10 +2812,16 @@ function closeModal(e) {
 function confirmModal() {
   const v=document.getElementById('modal-input').value.trim();
   if (!v) { document.getElementById('modal-input').focus(); return; }
+  pushHistory();
   if (modalMode==='add') {
     const p=findNode(modalTargetId); if(!p) return;
     if (!p.children) p.children=[];
-    p.children.push({id:'u_'+Date.now(), label:v, open:false});
+    const newChild = {id:'u_'+Date.now(), label:v, open:false};
+    p.children.push(newChild);
+    // Auto-assign theme color for new L1 nodes (direct children of root)
+    if (tree && p.id === tree.id) {
+      newChild.color = themeColorAt(p.children.length - 1);
+    }
     p.open=true;
   } else {
     const n=findNode(modalTargetId); if(n) n.label=v;
@@ -1747,7 +2858,7 @@ function startRename(id) {
   function commit() {
     if (committed) return; committed=true;
     const v=inp.value.trim();
-    if (v && v!==n.label) { n.label=v; save(); render(); }
+    if (v && v!==n.label) { pushHistory(); n.label=v; save(); render(); }
     inp.remove();
   }
   inp.addEventListener('keydown', e => {
@@ -1767,6 +2878,7 @@ function applyTransform(anim=false) {
   const c = document.getElementById('canvas');
   if (anim) { c.style.transition='transform .3s cubic-bezier(.25,.8,.25,1)'; setTimeout(()=>c.style.transition='',320); }
   c.style.transform = `translate(${pan.x}px,${pan.y}px) scale(${zoom})`;
+  drawMinimap();
 }
 function animateTo(tx,ty,tz) { pan.x=tx; pan.y=ty; zoom=tz; applyTransform(true); }
 
@@ -1799,7 +2911,7 @@ function fitView() {
   if (!tree) return;
   const isVertical = tree.orientation === 'vertical';
   const pos = [];
-  if (isVertical) { const totalW=subW(tree); layoutV(tree, totalW/2+20, 20, pos); }
+  if (isVertical) { layoutV(tree, pos, 20); }
   else { layout(tree, 0, subH(tree)/2+20, pos); }
   if (!pos.length) return;
   const pad=70;
@@ -1819,19 +2931,80 @@ document.addEventListener('click', e => {
   if (!e.target.closest('#ctx-menu'))                          hideCtxMenu();
   if (!e.target.closest('#card-menu') && !e.target.closest('.tree-card-btn')) hideCardMenu();
   if (!e.target.closest('#export-wrap'))                       hideExportMenu();
+  if (!e.target.closest('#help-panel') && !e.target.closest('#help-btn')) {
+    document.getElementById('help-panel')?.classList.remove('open');
+    document.getElementById('help-btn')?.classList.remove('active');
+  }
 });
 document.addEventListener('keydown', e => {
-  if (e.key==='Escape') { hideCtxMenu(); closeModal(); hideCardMenu(); hideExportMenu(); hideNewTreeModal(); closeNote(); }
+  if (e.key==='Escape') {
+    hideCtxMenu(); closeModal(); hideCardMenu(); hideExportMenu(); hideNewTreeModal();
+    document.getElementById('help-panel')?.classList.remove('open');
+    document.getElementById('help-btn')?.classList.remove('active');
+    if (focusSubtreeId) { exitFocus(); e.preventDefault(); }
+    kbFocusId = null;
+    document.querySelectorAll('.node.kb-focus').forEach(x=>x.classList.remove('kb-focus'));
+  }
+  // Undo / redo
+  if ((e.metaKey||e.ctrlKey) && e.key==='z') {
+    e.preventDefault();
+    if (e.shiftKey) redo(); else undo();
+    return;
+  }
   if ((e.metaKey||e.ctrlKey) && e.key==='f') {
     e.preventDefault();
     const inp = document.getElementById('search-input');
     if (inp && document.getElementById('editor-view').style.display!=='none') { inp.focus(); inp.select(); }
+    return;
+  }
+
+  // Keyboard nav — only when editor is active and no text input focused
+  const inEditor = document.getElementById('editor-view').style.display !== 'none';
+  const isTyping = ['INPUT','TEXTAREA'].includes(document.activeElement?.tagName) || document.activeElement?.isContentEditable;
+  if (!inEditor || isTyping || !kbFocusId) return;
+  if (!tree) return;
+
+  switch (e.key) {
+    case 'ArrowRight': e.preventDefault(); kbMove('right'); break;
+    case 'ArrowLeft':  e.preventDefault(); kbMove('left');  break;
+    case 'ArrowUp':    e.preventDefault(); kbMove('up');    break;
+    case 'ArrowDown':  e.preventDefault(); kbMove('down');  break;
+    case ' ':
+    case 'Enter': {
+      e.preventDefault();
+      const n = findNode(kbFocusId);
+      if (n?.children?.length) toggle(kbFocusId);
+      break;
+    }
+    case 'n': {
+      e.preventDefault();
+      const n = findNode(kbFocusId); if (!n) break;
+      if (!n.children) n.children = [];
+      openModal('add', kbFocusId);
+      break;
+    }
+    case 'r': e.preventDefault(); startRename(kbFocusId); break;
+    case 'Delete':
+    case 'Backspace': {
+      if (!kbFocusId.startsWith('u_')) break;
+      e.preventDefault();
+      ctxTargetId = kbFocusId; ctxDoDelete();
+      break;
+    }
   }
 });
 
 // ════════════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════════════
+initTheme();
+// Init edge style button label + undo button state
+(function() {
+  const btn = document.getElementById('edge-style-btn');
+  if (btn) btn.textContent = EDGE_LABELS[edgeStyle] || '⌇ Bezier';
+  const u=document.getElementById('btn-undo'), r=document.getElementById('btn-redo');
+  if(u) u.style.opacity='.35'; if(r) r.style.opacity='.35';
+})();
 initRouter();
 </script>
 
