@@ -188,6 +188,20 @@
     .tpl-card-desc  { font-size: 10px; color: var(--faint); }
     .ntm-btns { display: flex; gap: 8px; justify-content: flex-end; }
 
+    /* Color theme picker */
+    #ntm-themes { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+    .theme-opt input[type="radio"] { display: none; }
+    .theme-card {
+      border: 1.5px solid var(--border); border-radius: 9px;
+      padding: 8px 10px; cursor: pointer; background: var(--surface);
+      transition: border-color .12s, background .12s; text-align: center;
+      min-width: 66px;
+    }
+    .theme-opt input:checked + .theme-card { border-color: var(--teal); background: rgba(14,77,108,.06); }
+    .theme-dots { display: flex; gap: 3px; justify-content: center; margin-bottom: 5px; }
+    .theme-dots span { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+    .theme-name { font-size: 10px; font-weight: 600; color: var(--mid); }
+
     /* ══════════════════════════════════════
        EDITOR — TOOLBAR
     ══════════════════════════════════════ */
@@ -302,6 +316,7 @@
     .node {
       position: absolute; border-radius: var(--r);
       cursor: pointer; user-select: none;
+      display: flex; flex-direction: column; overflow: hidden;
       transition: box-shadow .14s, transform .12s, opacity .18s;
     }
     .node:hover:not(.leaf) { transform: translateY(-1px); }
@@ -312,10 +327,54 @@
       box-shadow: 0 0 0 2.5px #e8a020, 0 4px 18px rgba(232,160,32,.2) !important;
       z-index: 2;
     }
-    .node-body    { display: flex; align-items: center; height: 100%; padding: 0 10px 0 13px; gap: 7px; }
-    .node-lbl     { flex: 1; font-weight: 600; line-height: 1.3; }
-    .node-count   { font-size: 9px; font-weight: 700; letter-spacing: .3px; background: rgba(0,0,0,.1); border-radius: 8px; padding: 1px 6px; flex-shrink: 0; }
-    .node-chevron { flex-shrink: 0; font-size: 7px; opacity: .45; transition: transform .2s; margin-left: 1px; }
+
+    /* Header: label + pinned ⋮ menu button */
+    .node-header {
+      flex: 1; position: relative;
+      padding: 9px 28px 9px 12px; /* right padding reserves space for ⋮ */
+      display: flex; align-items: center;
+    }
+    .node-lbl {
+      font-weight: 600; line-height: 1.35;
+      word-break: break-word; width: 100%;
+    }
+    .node-menu-btn {
+      position: absolute; top: 5px; right: 5px;
+      width: 20px; height: 20px;
+      background: transparent; border: none; border-radius: 4px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      padding: 0; opacity: 0; transition: background .12s, opacity .15s;
+      color: inherit; flex-shrink: 0;
+    }
+    .node:hover .node-menu-btn { opacity: 0.5; }
+    .node-menu-btn:hover { background: rgba(0,0,0,.13); opacity: 1 !important; }
+
+    /* Footer: note icon (left) + count/chevron (right) */
+    .node-footer {
+      display: flex; align-items: center; gap: 4px;
+      padding: 3px 9px 4px 11px;
+      border-top: 1px solid rgba(0,0,0,0.09);
+      min-height: 26px; flex-shrink: 0;
+    }
+    .node-footer.footer-light { border-top-color: rgba(255,255,255,0.14); }
+    .node-footer-gap { flex: 1; }
+    .node-note-icon {
+      background: none; border: none; padding: 2px 3px; border-radius: 4px;
+      cursor: pointer; opacity: 0.55; color: inherit;
+      display: flex; align-items: center;
+      transition: opacity .1s, background .1s;
+    }
+    .node-note-icon:hover { opacity: 1; background: rgba(0,0,0,.1); }
+    .node-footer.footer-light .node-note-icon:hover { background: rgba(255,255,255,.14); }
+    .node-count {
+      font-size: 9px; font-weight: 700; letter-spacing: .3px;
+      background: rgba(0,0,0,.1); border-radius: 8px; padding: 1px 6px; flex-shrink: 0;
+    }
+    .node-footer.footer-light .node-count { background: rgba(255,255,255,.18); }
+    .node-chevron {
+      flex-shrink: 0; font-size: 7px; opacity: .5;
+      transition: transform .2s; line-height: 1;
+    }
     .node-chevron.open { transform: rotate(90deg); }
 
     /* ── Context menu ── */
@@ -389,6 +448,33 @@
       outline: none; padding: 0 13px;
       box-shadow: 0 0 0 4px rgba(14,77,108,.12);
     }
+
+    /* ── Notes panel ── */
+    #note-overlay {
+      position: fixed; inset: 0; z-index: 700;
+      background: rgba(28,43,58,.18);
+      backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+      display: none; align-items: center; justify-content: center;
+    }
+    #note-panel {
+      background: var(--white); border-radius: 14px;
+      padding: 20px 22px 18px; width: 460px; max-width: calc(100vw - 40px);
+      box-shadow: var(--shadow-lg), 0 0 0 1px var(--border);
+      animation: modalIn .18s cubic-bezier(.34,1.4,.64,1);
+    }
+    #note-panel-title { font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 3px; }
+    #note-panel-sub   { font-size: 11px; color: var(--faint); margin-bottom: 13px;
+                        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #note-textarea {
+      width: 100%; height: 130px;
+      padding: 9px 12px;
+      border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: 12.5px; font-family: inherit; color: var(--ink);
+      resize: vertical; outline: none; background: var(--surface);
+      transition: border-color .15s; line-height: 1.5;
+    }
+    #note-textarea:focus { border-color: var(--teal); background: #fff; }
+    #note-char-count { font-size: 10px; color: var(--faint); text-align: right; margin-top: 4px; }
   </style>
 </head>
 <body>
@@ -455,7 +541,7 @@
   </div>
 
   <!-- Hint -->
-  <div id="hint">Scroll to pan &nbsp;·&nbsp; Pinch to zoom &nbsp;·&nbsp; Click to expand &nbsp;·&nbsp; <strong>Right-click</strong> any node to add, rename, or delete &nbsp;·&nbsp; <strong>Double-click</strong> to rename</div>
+  <div id="hint">Scroll to pan &nbsp;·&nbsp; Pinch to zoom &nbsp;·&nbsp; Click to expand &nbsp;·&nbsp; Click <strong>⋮</strong> on any node for options &nbsp;·&nbsp; <strong>Double-click</strong> to rename</div>
 
   <!-- Legend -->
   <div id="legend">
@@ -475,9 +561,26 @@
   <div id="ctx-menu">
     <div class="ctx-item" id="ctx-add"    onclick="ctxDoAdd()">   <span class="ctx-icon">＋</span> Add child node</div>
     <div class="ctx-item" id="ctx-rename" onclick="ctxDoRename()"><span class="ctx-icon">✎</span> Rename</div>
+    <div class="ctx-item" id="ctx-note"   onclick="ctxDoNote()">  <span class="ctx-icon">✦</span> <span id="ctx-note-label">Add note</span></div>
     <div class="ctx-item" id="ctx-color"  onclick="ctxDoColor()" style="display:none"><span class="ctx-icon">◉</span> Change color</div>
+    <div class="ctx-item" id="ctx-orient" onclick="ctxDoOrient()" style="display:none"><span class="ctx-icon">⊟</span> Pyramid layout</div>
     <div class="ctx-sep"></div>
     <div class="ctx-item danger" id="ctx-delete" onclick="ctxDoDelete()"><span class="ctx-icon">✕</span> Delete node</div>
+  </div>
+
+  <!-- Notes panel -->
+  <div id="note-overlay" onclick="if(event.target===this)closeNote()">
+    <div id="note-panel">
+      <div id="note-panel-title">Note</div>
+      <div id="note-panel-sub">For: <span id="note-node-label"></span></div>
+      <textarea id="note-textarea" placeholder="Capture longer thoughts, context, or evidence for this node…" oninput="updateNoteCount()"></textarea>
+      <div id="note-char-count"></div>
+      <div class="modal-btns" style="margin-top:12px">
+        <button class="mbtn cancel" id="note-clear-btn" onclick="clearNote()" style="margin-right:auto;color:#b03020">Remove note</button>
+        <button class="mbtn cancel" onclick="closeNote()">Cancel</button>
+        <button class="mbtn ok"     onclick="saveNote()">Save</button>
+      </div>
+    </div>
   </div>
 
   <!-- Add / Rename modal -->
@@ -531,6 +634,44 @@
         <div class="tpl-card">
           <div class="tpl-card-title">VZ Telecom</div>
           <div class="tpl-card-desc">Full performance levers</div>
+        </div>
+      </label>
+    </div>
+    <div class="ntm-label">Color Theme</div>
+    <div id="ntm-themes">
+      <label class="theme-opt">
+        <input type="radio" name="theme" value="classic" checked/>
+        <div class="theme-card">
+          <div class="theme-dots"><span style="background:#1c2b3a"></span><span style="background:#166638"></span><span style="background:#0e4d6c"></span><span style="background:#7d3512"></span></div>
+          <div class="theme-name">Classic</div>
+        </div>
+      </label>
+      <label class="theme-opt">
+        <input type="radio" name="theme" value="ocean"/>
+        <div class="theme-card">
+          <div class="theme-dots"><span style="background:#0a3352"></span><span style="background:#0e6e9c"></span><span style="background:#1a8a7a"></span><span style="background:#2e4fa3"></span></div>
+          <div class="theme-name">Ocean</div>
+        </div>
+      </label>
+      <label class="theme-opt">
+        <input type="radio" name="theme" value="sunset"/>
+        <div class="theme-card">
+          <div class="theme-dots"><span style="background:#3d1a0f"></span><span style="background:#b84422"></span><span style="background:#d4782a"></span><span style="background:#a33050"></span></div>
+          <div class="theme-name">Sunset</div>
+        </div>
+      </label>
+      <label class="theme-opt">
+        <input type="radio" name="theme" value="forest"/>
+        <div class="theme-card">
+          <div class="theme-dots"><span style="background:#1a3320"></span><span style="background:#2d6e3e"></span><span style="background:#5a8e3a"></span><span style="background:#1e6b55"></span></div>
+          <div class="theme-name">Forest</div>
+        </div>
+      </label>
+      <label class="theme-opt">
+        <input type="radio" name="theme" value="mono"/>
+        <div class="theme-card">
+          <div class="theme-dots"><span style="background:#1a1a1a"></span><span style="background:#3d3d3d"></span><span style="background:#5e5e5e"></span><span style="background:#7a7a7a"></span></div>
+          <div class="theme-name">Mono</div>
         </div>
       </label>
     </div>
@@ -773,6 +914,17 @@ const TEMPLATES = {
 TEMPLATES.vz = DEFAULT;
 
 // ════════════════════════════════════════════════
+// COLOR THEMES
+// ════════════════════════════════════════════════
+const COLOR_THEMES = {
+  classic: { root:'#1c2b3a', colors:['#166638','#0e4d6c','#7d3512','#4a3580'] },
+  ocean:   { root:'#0a3352', colors:['#0e6e9c','#1a8a7a','#2e4fa3','#4a8ab5'] },
+  sunset:  { root:'#3d1a0f', colors:['#b84422','#d4782a','#a33050','#7a2d5e'] },
+  forest:  { root:'#1a3320', colors:['#2d6e3e','#5a8e3a','#1e6b55','#4a7a2a'] },
+  mono:    { root:'#1a1a1a', colors:['#3d3d3d','#5e5e5e','#7a7a7a','#4a4a4a'] },
+};
+
+// ════════════════════════════════════════════════
 // MULTI-TREE STORAGE
 // ════════════════════════════════════════════════
 const STORE_KEY = 'issuetrees_v1';
@@ -961,6 +1113,7 @@ function showNewTreeModal() {
   const inp = document.getElementById('ntm-name');
   inp.value = '';
   document.querySelector('input[name="tpl"][value="blank"]').checked = true;
+  document.querySelector('input[name="theme"][value="classic"]').checked = true;
   setTimeout(() => inp.focus(), 60);
 }
 function hideNewTreeModal() {
@@ -968,14 +1121,21 @@ function hideNewTreeModal() {
   if (window.location.hash === '#/new') history.replaceState(null, '', '#/');
 }
 function confirmNewTree() {
-  const name   = document.getElementById('ntm-name').value.trim() || 'Untitled Tree';
-  const tplKey = document.querySelector('input[name="tpl"]:checked')?.value || 'blank';
-  const tplData = TEMPLATES[tplKey] || TEMPLATES.blank;
-  const newId  = genId();
-  const store  = loadStore();
-  const data   = clone(tplData);
+  const name     = document.getElementById('ntm-name').value.trim() || 'Untitled Tree';
+  const tplKey   = document.querySelector('input[name="tpl"]:checked')?.value || 'blank';
+  const themeKey = document.querySelector('input[name="theme"]:checked')?.value || 'classic';
+  const tplData  = TEMPLATES[tplKey] || TEMPLATES.blank;
+  const newId    = genId();
+  const store    = loadStore();
+  const data     = clone(tplData);
   // Sync root label to tree name for non-VZ templates
   if (tplKey !== 'vz') data.label = name;
+  // Apply color theme
+  const theme = COLOR_THEMES[themeKey] || COLOR_THEMES.classic;
+  data.color = theme.root;
+  if (data.children?.length) {
+    data.children.forEach((child, i) => { child.color = theme.colors[i % theme.colors.length]; });
+  }
   store.trees[newId] = {
     id: newId, name,
     createdAt: new Date().toISOString(),
@@ -1241,17 +1401,51 @@ function expandAll(n) {
 // LAYOUT
 // ════════════════════════════════════════════════
 const NW=216, NH=44, HG=58, VG=9;
+const VG_V=50, HG_V=14; // vertical layout gaps
 
-function subH(n) {
-  if (!n.open || !n.children?.length) return NH+VG;
-  return Math.max(NH+VG, n.children.reduce((s,c) => s+subH(c), 0));
+function nodeH(n, depth) {
+  const label  = n.label || '';
+  const innerW = NW - 40; // 12px left pad + 28px right pad (room for ⋮)
+  const [charW, lh] = depth===0 ? [8.0,18] : depth===1 ? [7.5,17] : depth===2 ? [6.9,16] : [6.6,15];
+  const charsPerLine = Math.max(1, Math.floor(innerW / charW));
+  const lines   = Math.max(1, Math.ceil(label.length / charsPerLine));
+  const footerH = (n.children?.length || n.note) ? 26 : 0;
+  return Math.max(NH, lines * lh + 18 + footerH);
+}
+
+function subH(n, depth=0) {
+  const nh = nodeH(n, depth);
+  if (!n.open || !n.children?.length) return nh + VG;
+  return Math.max(nh + VG, n.children.reduce((s,c) => s + subH(c, depth+1), 0));
 }
 function layout(n, x, midY, out, depth=0) {
-  out.push({n, x, y:midY-NH/2, depth});
+  const nh = nodeH(n, depth);
+  out.push({n, x, y:midY-nh/2, depth, nh});
   if (n.open && n.children?.length) {
-    const tot = n.children.reduce((s,c) => s+subH(c), 0);
+    const tot = n.children.reduce((s,c) => s+subH(c, depth+1), 0);
     let cy = midY - tot/2;
-    for (const c of n.children) { const h=subH(c); layout(c, x+NW+HG, cy+h/2, out, depth+1); cy+=h; }
+    for (const c of n.children) { const h=subH(c, depth+1); layout(c, x+NW+HG, cy+h/2, out, depth+1); cy+=h; }
+  }
+}
+
+// Vertical (pyramid) layout — top-to-bottom
+function subW(n, depth=0) {
+  const selfW = NW + HG_V;
+  if (!n.open || !n.children?.length) return selfW;
+  const childrenW = n.children.reduce((s,c) => s + subW(c, depth+1), 0);
+  return Math.max(selfW, childrenW);
+}
+function layoutV(n, midX, y, out, depth=0) {
+  const nh = nodeH(n, depth);
+  out.push({n, x: midX - NW/2, y, depth, nh});
+  if (n.open && n.children?.length) {
+    const tot = n.children.reduce((s,c) => s + subW(c, depth+1), 0);
+    let cx = midX - tot/2;
+    for (const c of n.children) {
+      const w = subW(c, depth+1);
+      layoutV(c, cx + w/2, y + nh + VG_V, out, depth+1);
+      cx += w;
+    }
   }
 }
 
@@ -1260,15 +1454,22 @@ function layout(n, x, midY, out, depth=0) {
 // ════════════════════════════════════════════════
 function render(searchTerm='') {
   if (!tree) return;
+  const isVertical = tree.orientation === 'vertical';
   const colors = buildColorMap(tree);
   const canvas = document.getElementById('canvas');
   const svg    = document.getElementById('svg-layer');
-  const totalH = subH(tree);
   const pos    = [];
-  layout(tree, 0, totalH/2+20, pos);
+
+  if (isVertical) {
+    const totalW = subW(tree);
+    layoutV(tree, totalW/2 + 20, 20, pos);
+  } else {
+    const totalH = subH(tree);
+    layout(tree, 0, totalH/2+20, pos);
+  }
 
   const W = pos.reduce((m,p) => Math.max(m, p.x+NW), 0) + 150;
-  const H = pos.reduce((m,p) => Math.max(m, p.y+NH), 0) + 90;
+  const H = pos.reduce((m,p) => Math.max(m, p.y+p.nh), 0) + 90;
   canvas.style.width = W+'px'; canvas.style.height = H+'px';
   svg.setAttribute('width', W); svg.setAttribute('height', H);
 
@@ -1276,15 +1477,22 @@ function render(searchTerm='') {
 
   // SVG edges
   let paths = '';
-  for (const {n,x,y} of pos) {
+  for (const {n,x,y,nh} of pos) {
     if (!n.open || !n.children?.length) continue;
-    const px=x+NW, py=y+NH/2;
     for (const child of n.children) {
       const cp = pos.find(p => p.n===child); if (!cp) continue;
-      const cx=cp.x, cy=cp.y+NH/2;
       const col = colors[child.id]||'#888';
-      const mx  = px+HG*.48;
-      paths += `<path d="M${px},${py} C${mx},${py} ${mx},${cy} ${cx},${cy}" fill="none" stroke="${col}" stroke-width="1.5" opacity="0.22"/>`;
+      if (isVertical) {
+        const px = x+NW/2, py = y+nh;
+        const cx = cp.x+NW/2, cy = cp.y;
+        const my = py + VG_V*0.48;
+        paths += `<path d="M${px},${py} C${px},${my} ${cx},${my} ${cx},${cy}" fill="none" stroke="${col}" stroke-width="1.5" opacity="0.22"/>`;
+      } else {
+        const px=x+NW, py=y+nh/2;
+        const cx=cp.x, cy=cp.y+cp.nh/2;
+        const mx=px+HG*.48;
+        paths += `<path d="M${px},${py} C${mx},${py} ${mx},${cy} ${cx},${cy}" fill="none" stroke="${col}" stroke-width="1.5" opacity="0.22"/>`;
+      }
     }
   }
   svg.innerHTML = paths;
@@ -1294,7 +1502,7 @@ function render(searchTerm='') {
   if (searchTerm) for (const {n} of pos) if (n.label.toLowerCase().includes(searchTerm)) matchIds.add(n.id);
 
   // Nodes
-  for (const {n,x,y,depth} of pos) {
+  for (const {n,x,y,depth,nh} of pos) {
     const col     = colors[n.id] || '#4a6070';
     const hasKids = !!(n.children?.length);
     const isRoot  = depth===0;
@@ -1303,7 +1511,7 @@ function render(searchTerm='') {
     const el = document.createElement('div');
     el.className = 'node' + (hasKids ? '' : ' leaf');
     el.dataset.id = n.id;
-    el.style.cssText = `left:${x}px;top:${y}px;width:${NW}px;height:${NH}px;`;
+    el.style.cssText = `left:${x}px;top:${y}px;width:${NW}px;min-height:${nh}px;`;
 
     if (isRoot||isL1) {
       el.style.background  = col;
@@ -1324,15 +1532,27 @@ function render(searchTerm='') {
       else el.classList.add('dimmed');
     }
 
-    const txtCol = (isRoot||isL1) ? '#fff' : depth===2 ? '#1c2b3a' : '#3a4f62';
-    const txtSz  = isRoot ? '13.5px' : isL1 ? '12.5px' : depth===2 ? '11.5px' : '11px';
-    const badge  = (!n.open && hasKids) ? `<span class="node-count" style="color:${txtCol}">${n.children.length}</span>` : '';
-    const chevron = hasKids ? `<span class="node-chevron${n.open?' open':''}">▶</span>` : '';
+    const isDark  = isRoot || isL1;
+    const txtCol  = isDark ? '#fff' : depth===2 ? '#1c2b3a' : '#3a4f62';
+    const txtSz   = isRoot ? '13.5px' : isL1 ? '12.5px' : depth===2 ? '11.5px' : '11px';
 
-    el.innerHTML = `<div class="node-body">
-      <span class="node-lbl" style="color:${txtCol};font-size:${txtSz}">${n.label}</span>
-      ${badge}${chevron}
-    </div>`;
+    // Menu button SVG (vertical 3-dots)
+    const menuSvg = `<svg viewBox="0 0 4 16" width="3" height="13" fill="currentColor" style="pointer-events:none"><circle cx="2" cy="2" r="1.5"/><circle cx="2" cy="8" r="1.5"/><circle cx="2" cy="14" r="1.5"/></svg>`;
+
+    // Footer (chevron + count on right, note icon on left)
+    const hasFooter = !!(hasKids || n.note);
+    const badge     = (!n.open && hasKids) ? `<span class="node-count">${n.children.length}</span>` : '';
+    const chevron   = hasKids ? `<span class="node-chevron${n.open?' open':''}">▶</span>` : '';
+    const noteIconSvg = `<svg viewBox="0 0 14 14" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.3" style="pointer-events:none"><rect x="1.5" y="1" width="11" height="12" rx="2"/><line x1="4" y1="4.5" x2="10" y2="4.5"/><line x1="4" y1="7" x2="10" y2="7"/><line x1="4" y1="9.5" x2="7.5" y2="9.5"/></svg>`;
+    const noteBtn   = n.note ? `<button class="node-note-icon" title="${escHtml((n.note||'').slice(0,80))}" style="color:${txtCol}">${noteIconSvg}</button>` : '';
+    const footerHTML = hasFooter
+      ? `<div class="node-footer${isDark?' footer-light':''}" style="color:${txtCol}">${noteBtn}<span class="node-footer-gap"></span>${badge}${chevron}</div>`
+      : '';
+
+    el.innerHTML = `<div class="node-header">
+      <span class="node-lbl" style="color:${txtCol};font-size:${txtSz}">${escHtml(n.label)}</span>
+      <button class="node-menu-btn" style="color:${txtCol}" title="Options">${menuSvg}</button>
+    </div>${footerHTML}`;
 
     let clickTimer = null;
     if (hasKids) {
@@ -1347,7 +1567,16 @@ function render(searchTerm='') {
       clearTimeout(clickTimer);
       startRename(n.id);
     });
-    el.addEventListener('contextmenu', e => { e.preventDefault(); showCtxMenu(n.id, e.clientX, e.clientY, depth); });
+    el.querySelector('.node-menu-btn').addEventListener('click', e => {
+      e.stopPropagation();
+      e.preventDefault();
+      showCtxMenu(n.id, e.clientX, e.clientY, depth);
+    });
+    el.querySelector('.node-note-icon')?.addEventListener('click', e => {
+      e.stopPropagation();
+      e.preventDefault();
+      openNote(n.id);
+    });
 
     canvas.appendChild(el);
   }
@@ -1359,9 +1588,18 @@ function render(searchTerm='') {
 function showCtxMenu(id, x, y, depth=99) {
   ctxTargetId = id;
   const isCustom = id.startsWith('u_');
-  const isL1node = depth===1;
+  const isRoot   = depth === 0;
+  const isL1node = depth === 1;
   document.getElementById('ctx-delete').classList.toggle('disabled', !isCustom);
-  document.getElementById('ctx-color').style.display = isL1node ? 'flex' : 'none';
+  document.getElementById('ctx-color').style.display  = (isRoot || isL1node) ? 'flex' : 'none';
+  const hasNote = !!(findNode(id)?.note);
+  document.getElementById('ctx-note-label').textContent = hasNote ? 'Edit note' : 'Add note';
+  const orientEl = document.getElementById('ctx-orient');
+  orientEl.style.display = isRoot ? 'flex' : 'none';
+  if (isRoot) {
+    const isPyramid = tree?.orientation === 'vertical';
+    orientEl.innerHTML = `<span class="ctx-icon">${isPyramid ? '⊞' : '⊟'}</span> ${isPyramid ? 'Horizontal layout' : 'Pyramid layout'}`;
+  }
   const menu = document.getElementById('ctx-menu');
   menu.style.display = 'block';
   menu.style.left = x+'px'; menu.style.top = y+'px';
@@ -1395,6 +1633,47 @@ function ctxDoDelete() {
   const parent=findParent(id);
   if (parent) parent.children=parent.children.filter(c=>c.id!==id);
   save(); render();
+}
+function ctxDoOrient() {
+  hideCtxMenu();
+  if (!tree) return;
+  tree.orientation = tree.orientation === 'vertical' ? 'horizontal' : 'vertical';
+  save(); render(); fitView();
+}
+function ctxDoNote() { const id=ctxTargetId; hideCtxMenu(); openNote(id); }
+
+// ════════════════════════════════════════════════
+// NOTES
+// ════════════════════════════════════════════════
+let noteTargetId = null;
+function openNote(id) {
+  noteTargetId = id;
+  const n = findNode(id); if (!n) return;
+  document.getElementById('note-node-label').textContent = n.label;
+  document.getElementById('note-textarea').value = n.note || '';
+  document.getElementById('note-clear-btn').style.display = n.note ? 'inline-flex' : 'none';
+  updateNoteCount();
+  document.getElementById('note-overlay').style.display = 'flex';
+  setTimeout(() => document.getElementById('note-textarea').focus(), 60);
+}
+function closeNote() {
+  document.getElementById('note-overlay').style.display = 'none';
+  noteTargetId = null;
+}
+function saveNote() {
+  const v = document.getElementById('note-textarea').value.trim();
+  const n = findNode(noteTargetId); if (!n) return;
+  n.note = v || undefined;
+  save(); render(); closeNote();
+}
+function clearNote() {
+  const n = findNode(noteTargetId); if (!n) return;
+  n.note = undefined;
+  save(); render(); closeNote();
+}
+function updateNoteCount() {
+  const len = document.getElementById('note-textarea').value.length;
+  document.getElementById('note-char-count').textContent = len > 0 ? `${len} characters` : '';
 }
 
 // ════════════════════════════════════════════════
@@ -1443,6 +1722,11 @@ function confirmModal() {
 document.getElementById('modal-input').addEventListener('keydown', e => {
   if (e.key==='Enter')  { e.preventDefault(); confirmModal(); }
   if (e.key==='Escape') closeModal();
+  e.stopPropagation();
+});
+document.getElementById('note-textarea').addEventListener('keydown', e => {
+  if ((e.metaKey||e.ctrlKey) && e.key==='Enter') { e.preventDefault(); saveNote(); }
+  if (e.key==='Escape') { e.preventDefault(); closeNote(); }
   e.stopPropagation();
 });
 
@@ -1513,13 +1797,16 @@ window.addEventListener('mouseup',   () => { drag=false; vp.style.cursor='defaul
 
 function fitView() {
   if (!tree) return;
-  const pos=[]; layout(tree, 0, subH(tree)/2+20, pos);
+  const isVertical = tree.orientation === 'vertical';
+  const pos = [];
+  if (isVertical) { const totalW=subW(tree); layoutV(tree, totalW/2+20, 20, pos); }
+  else { layout(tree, 0, subH(tree)/2+20, pos); }
   if (!pos.length) return;
   const pad=70;
   const x0=pos.reduce((m,p)=>Math.min(m,p.x),Infinity)-pad;
   const y0=pos.reduce((m,p)=>Math.min(m,p.y),Infinity)-pad;
   const x1=pos.reduce((m,p)=>Math.max(m,p.x+NW),-Infinity)+pad;
-  const y1=pos.reduce((m,p)=>Math.max(m,p.y+NH),-Infinity)+pad;
+  const y1=pos.reduce((m,p)=>Math.max(m,p.y+p.nh),-Infinity)+pad;
   const vw=window.innerWidth, vh=window.innerHeight-60;
   const nz=Math.min(vw/(x1-x0), vh/(y1-y0), 1.4);
   animateTo((vw-(x1-x0)*nz)/2-x0*nz, (vh-(y1-y0)*nz)/2-y0*nz+30, nz);
@@ -1534,7 +1821,7 @@ document.addEventListener('click', e => {
   if (!e.target.closest('#export-wrap'))                       hideExportMenu();
 });
 document.addEventListener('keydown', e => {
-  if (e.key==='Escape') { hideCtxMenu(); closeModal(); hideCardMenu(); hideExportMenu(); hideNewTreeModal(); }
+  if (e.key==='Escape') { hideCtxMenu(); closeModal(); hideCardMenu(); hideExportMenu(); hideNewTreeModal(); closeNote(); }
   if ((e.metaKey||e.ctrlKey) && e.key==='f') {
     e.preventDefault();
     const inp = document.getElementById('search-input');
